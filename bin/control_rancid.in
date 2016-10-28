@@ -192,6 +192,7 @@ git )
 .old
 *.new
 *.raw
+*.swp
 EOF
     if [ -f .gitignore.locale ] ; then
 	cat .gitignore.locale >> .gitignore
@@ -453,7 +454,7 @@ for router in `cut -d\; -f1 ../routers.up` ; do
 	git status $router | grep '^?' > /dev/null 2>&1
 	if [ $? -eq 0 ] ; then
 	    git add $router
-	    git commit -m 'new router' $router
+	    git commit -m "new router: $router" $router
 	    echo "$RCSSYS added missing router $router"
 	fi
         ;;
@@ -620,7 +621,7 @@ if [ "X$device" != "X" ] ; then
     subject="$GROUP/$device $subject"
 else
     if [ $RCSSYS = git ] ; then
-	$RCSSYS commit -am updates
+        $RCSSYS commit -am "updates on $(date)"
     else
 	$RCSSYS commit -m updates
     fi
