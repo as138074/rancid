@@ -1,6 +1,6 @@
 package bigip;
 ##
-## $Id: bigip.pm.in 3350 2016-04-04 01:58:23Z heas $
+## $Id: bigip.pm.in 3459 2016-09-08 21:37:33Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -255,6 +255,11 @@ sub WriteTerm {
         $lines++;
 
         if (/(bind-pw|encrypted-password|user-password-encrypted|passphrase) / && $filter_pwds >= 1) {
+            ProcessHistory("ENABLE","","","# $1 <removed>\n");
+            next;
+        }
+        if (/(auth-password-encrypted) / && 
+	    ($filter_osc || $filter_pwds > 1)) {
             ProcessHistory("ENABLE","","","# $1 <removed>\n");
             next;
         }

@@ -1,3 +1,85 @@
+3.6.2
+	Fix etc/Makefile for rancid.types.conf handling.
+
+3.6.1
+	ios.pm: filter license registration timestamp
+ 
+	fnrancid: filter oscillating md5-keys
+
+	par.c: fix misplaced pointer deref
+
+3.6
+	rancid.pm: ipaddrval() if IPv6 prefix length is missing, simply set 128.
+
+	*login: in_proc must be global in expect_after.  had trouble reproducing
+	the original error, but this should be the correct fix.
+
+	xlogin: escape the * in lastprompt - Mattieu Beretti
+
+	*login: change handling of ssh key-related prompts to one line at a time
+	to eliminate timing-related problem.
+
+	alogin: login() eat one line at a time
+
+	a10login: remove the aflex-specific stuff.  This is the wrong way to
+	do this and it doesn't work properly anyway.
+
+	control_rancid: create <group>/configs if it does not exist
+
+	hrancid: use rancid.pm (removes code duplication)
+
+	rancid.pm: check for existence of functions for given device type after
+	loading the modules for the type.  return failure if any are missing.
+
+	par: add -FH options
+
+	rancid.types.conf, iosshtech.pm: Add device type ciscoshtech for
+	example purposes
+
+	acos.pm: filter trailing WS & recognize incomplete/invalid command
+	error in basicFilter()
+
+	acos.pm: filter trailing WS in ShowAflex()
+
+	acos.pm: 'show vlan' is 'show vlans' in ACOS 4.x.
+
+	acos.pm: Add cmd 'show partition-config all' for ACOS 4.x, where
+	'show running-config all-partitions' does not work.
+
+	acos.pm: recognize invalid cmd error in ShowRunningConfig() and filter
+	the config size comment
+
+	fnlogin: missing "end" to exit global mode for -[csx] - Richard Goode
+
+	plogin: add -m & -M
+
+	rancid.pm: missing variable initialization
+
+	nxos.pm: fix bug in recognizing the end of an access-list
+
+	hlogin: set tty init options when there is no controlling tty and set
+	set the term width to 132 when there is no controlling tty and for -[sc]
+	so that the hp device does not wrap lines.
+
+	ios.pm: also filter IPv6 PDP addresses - Reuben Farrelly
+
+	ios.pm: evaluation license periods are displayed differently
+
+	lg: Add show interface optics 
+
+	iosxr.pm: More useless FPD messages
+
+	junos.pm: handle a transient cmd protocol failure seen in show version
+
+	control_rancid: use git ls-files instead of git status for .gitignore
+	and <group>/rancid.conf
+
+	fnrancid: fix formatting around removal of private-keys
+
+	bigip.pm: filter snmpv3 oscillating auth-password-encrypted
+
+	iosxr.pm: filter useless FPD upgrade message
+
 3.5.1
 	hlogin: missed an ssh -c option among the clean-up - Mark Felder
 

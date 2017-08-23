@@ -567,8 +567,8 @@ sub WriteTerm {
 @commandtable = (
 	{'show version'			=> 'ShowVersion'},
 	{'show bootvar'			=> 'ShowBoot'},
-#	{'dir flash:'			=> 'DirSlotN'},
-#	{'dir slot0:'			=> 'DirSlotN'},
+	{'dir flash:'			=> 'DirSlotN'},
+	{'dir slot0:'			=> 'DirSlotN'},
 	{'show chassis'			=> 'ShowChassis'},
 	{'show system'			=> 'ShowChassis'},
 	{'show inventory'		=> 'ShowInventory'},

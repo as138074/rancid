@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: elogin.in 3445 2016-08-10 17:15:38Z heas $
+## $Id: elogin.in 3519 2016-12-01 00:23:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -304,17 +304,19 @@ proc login { router user userpswd passwd prompt cmethod cyphertype } {
     # This helps cleanup each expect clause.
     expect_after {
 	timeout {
+	    global in_proc
 	    send_user "\nError: TIMEOUT reached\n"
 	    catch {close}; catch {wait};
-	    if { $in_proc} {
+	    if {$in_proc} {
 		return 1
 	    } else {
 		continue
 	    }
 	} eof {
+	    global in_proc
 	    send_user "\nError: EOF received\n"
 	    catch {close}; catch {wait};
-	    if { $in_proc} {
+	    if {$in_proc} {
 		return 1
 	    } else {
 		continue

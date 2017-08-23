@@ -14,8 +14,10 @@ a10;command;acos::ShowLicense;show license
 a10;command;acos::ShowBootimage;show bootimage
 a10;command;acos::ShowAdmin;show admin
 a10;command;acos::ShowVlan;show vlan
+a10;command;acos::ShowVlan;show vlans
 a10;command;acos::ShowAflex;show aflex all-partitions
 a10;command;acos::ShowRunningConfig;show running-config all-partitions
+a10;command;acos::ShowRunningConfig;show partition-config all
 #
 agm;script;agmrancid
 #
@@ -284,6 +286,7 @@ compass;command;eos::ShowConfig;show configuration detail
 css;script;cssrancid
 css;login;clogin
 #
+# Dell DES-3010F, DES-3052P, DES-3526, DES-3550
 dell;script;rancid -t dell
 dell;login;dllogin
 dell;module;dell
@@ -393,7 +396,7 @@ hitachi;login;htlogin
 #
 # HP Procurve switch such as the 2524, 4108 or J9086A (aka. 2610) procurve 
 # switches, J9091A, and J8698A.  
-hp;script;hrancid
+hp;script;hrancid -t hp
 hp;login;hlogin
 #
 juniper;script;rancid -t juniper

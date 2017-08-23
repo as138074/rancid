@@ -1,6 +1,6 @@
 package nxos;
 ##
-## $Id: nxos.pm.in 3420 2016-07-06 00:33:36Z heas $
+## $Id: nxos.pm.in 3475 2016-10-25 21:18:22Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -807,7 +807,7 @@ REPEAT:	tr/\015//d;
 	    ProcessHistory("ACL $nlri $key","","","$_");
 	    while (<$INPUT>) {
 		tr/\015//d;
-		goto REPEAT if (/^$prompt/ || /^(\s|\d|!)/);
+		goto REPEAT if (/^$prompt/ || !/^\s/);
 		if (/^\s*!/) {
 		    ProcessHistory("ACL $nlri $key !", "", "", "$_");
 		    next;

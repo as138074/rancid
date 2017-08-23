@@ -1,6 +1,6 @@
 package junos;
 ##
-## $Id: junos.pm.in 3392 2016-05-23 17:41:57Z heas $
+## $Id: junos.pm.in 3462 2016-09-12 20:33:41Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -496,6 +496,7 @@ sub ShowVersion {
     while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
+	return -1 if (/select: protocol failure /i);	# fail sending cmd
 	next if (/^\s*$/);
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)(:\d+)?\}/);

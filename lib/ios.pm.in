@@ -1,6 +1,6 @@
 package ios;
 ##
-## $Id: ios.pm.in 3419 2016-07-06 00:03:21Z heas $
+## $Id: ios.pm.in 3565 2016-12-16 18:33:20Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -501,8 +501,8 @@ sub ShowCellular {
 	return(1) if (/(invalid (input|command) detected|type help or )/i);
 
 	# Ignore the PDP address and assigned DNS servers
-	next if (/^PDP address/);
-	next if (/^\s*(Primary|Secondary) DNS address/);
+	next if (/^pdp (ipv6 )?address/i);
+	next if (/^\s*(primary|secondary) DNS (ipv6 )?address/i);
 
 	ProcessHistory("COMMENTS","keysort","CELL","!CELL: $_");
     }
@@ -547,8 +547,9 @@ sub ShowLicense {
 
 	# filter the BS from license broker
 	next if (/(renewal attempt|communication attempt):/i);
+	next if (/next registration attempt:/i);		# timestamp
 	next if (/(period used:|requested time:)/i);		# show lic feature
-	if (/(^\s*period left:\s*)\d+/i) {
+	if (/(^\s*(evaluation )?period (left|remaining):\s*)\d+/i) {
 	    ProcessHistory("COMMENTS","keysort","LICENSE","! $1<limited>\n");
 	    next;
 	}

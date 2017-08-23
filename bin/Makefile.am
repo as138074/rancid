@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 3400 2016-05-25 06:48:52Z heas $
+## $Id: Makefile.am 3505 2016-11-20 04:45:26Z heas $
 ##
 ## Copyright (c) 1997-2015 by Terrapin Communications, Inc.
 ## All rights reserved.
@@ -22,7 +22,7 @@ bin_SCRIPTS = a10login alogin agmrancid anlogin arancid \
 	rivrancid rrancid rtftpcopy srancid tlogin trancid ulogin wlogin \
 	xilogin xirancid xlogin zrancid
 # XXX hack for the rancid to get pkglibdir, see corresponding XXX below
-bin_in = plogin.in rancid.in srancid.in
+bin_in = hrancid.in plogin.in rancid.in srancid.in
 
 bin_SCRIPTS += lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
 EXTRA_DIST= lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
@@ -75,20 +75,20 @@ auto_edit = sed \
 	-e 's,@SENDMAIL\@,$(SENDMAIL),g' \
 	-e 's,@VERSION\@,$(VERSION),g' \
 	-e 's,@COPYYEARS\@,$(COPYYEARS),g' \
-	-e '/@copyright@/r ../COPYING' \
-	-e '/@copyright@/d'
+	-e '/@copyright@/r ../COPYING' -e '/@copyright@/d'
 
 # XXX this is the generic version for the rest of bin_scripts that comes from
 #     configure.in now.  perhaps change to use this.
-#$(bin_SCRIPTS): Makefile $(top_builddir)/config.status
-$(bin_in:%.in=%): Makefile $(top_builddir)/config.status
+$(bin_in:%.in=%): Makefile $(top_builddir)/config.status ../COPYING
 	rm -f $@ $@.tmp; \
 	$(auto_edit) $(srcdir)/$@.in >$@.tmp; \
 	chmod +x $@.tmp; \
 	mv $@.tmp $@
 # XXX there must be a better way to produce these dependencies, perhaps in
-#     configure.
-plogin: $(srcdir)/plogin.in ../COPYING
+#     configure, but more likely need a depend target.
+hlogin: $(srcdir)/hlogin.in
+hrancid: $(srcdir)/hrancid.in
+plogin: $(srcdir)/plogin.in
 rancid: $(srcdir)/rancid.in
 
 lg.cgi: Makefile $(srcdir)/lg.cgi.in

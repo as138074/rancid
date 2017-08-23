@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: a10login.in 3445 2016-08-10 17:15:38Z heas $
+## $Id: a10login.in 3519 2016-12-01 00:23:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -65,17 +65,19 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	# This helps cleanup each expect clause.
 	expect_after {
 	    timeout {
+		global in_proc
 		send_user "\nError: TIMEOUT reached\n"
 		catch {close}; catch {wait};
-		if { $in_proc} {
+		if {$in_proc} {
 		    return 1
 		} else {
 		    continue
 		}
 	    } eof {
+		global in_proc
 		send_user "\nError: EOF received\n"
 		catch {close}; catch {wait};
-		if { $in_proc} {
+		if {$in_proc} {
 		    return 1
 		} else {
 		    continue
@@ -126,24 +128,31 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	    catch {close}; catch {wait};
 	    return 1
 	}
-	-re "(Host key not found |The authenticity of host .* be established).* \\(yes/no\\)\\?" {
-	    send "yes\r"
-	    send_user "\nHost $router added to the list of known hosts.\n"
+	-re "(Host key not found |The authenticity of host .* be established)" {
+	    expect {
+		-re "\\(yes\/no\\)\\?"	{ send "yes\r";
+					  send_user "\nHost $router added to the list of known hosts.\n"
+					 }
+		-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
+	    }
 	    exp_continue
 	}
-	-re "HOST IDENTIFICATION HAS CHANGED.* \\(yes/no\\)\\?" {
-	    send "no\r"
+	-re "HOST IDENTIFICATION HAS CHANGED" {
 	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
+	    expect {
+		-re "\\(yes\/no\\)\\?"	{ send "no\r" }
+		-re " strict checking\.\[\r\n]+" { }
+		-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
+	    }
 	    catch {close}; catch {wait};
 	    return 1
 	}
-	-re "HOST IDENTIFICATION HAS CHANGED\[^\n\r]+" {
-	    send_user "\nError: The host key for $router has changed.  Update the SSH known_hosts file accordingly.\n"
-	    return 1
-	}
-	-re "Offending key for .* \\(yes/no\\)\\?" {
-	    send "no\r"
+	-re "Offending key for " {
 	    send_user "\nError: host key mismatch for $router.  Update the SSH known_hosts file accordingly.\n"
+	    expect {
+		-re "\\(yes\/no\\)\\?"	{ send "no\r" }
+		-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
+	    }
 	    catch {close}; catch {wait};
 	    return 1
 	}
@@ -280,78 +289,17 @@ proc run_commands { prompt command } {
     for {set i 0} {$i < $num_commands} { incr i} {
 	set command [string trim [lindex $commands $i]]
 	send -- "[subst -nocommands $command]\r"
-	if {[string equal $command {show aflex all-partitions}]} {
-	    set partitions {}
-	    set partition {}
-	    set arules {}
-	    expect {
-		-re {partition: (\w+)}	{
-						    send_user -- "$expect_out(buffer)"
-						    if {[string length $partition] != 0} {
-							lappend partitions $arules
-						    }
-						    set partition $expect_out(1,string)
-						    lappend partitions $partition
-						    set arules {}
-						    exp_continue
-						}
-		-re {^([-\w]+)\s+Check}	{
-						    send_user -- "$expect_out(buffer)"
-						    set arule $expect_out(1,string)
-						    lappend arules $arule
-						    exp_continue
-						}
-		-re "\b+"			{ exp_continue }
-		-re "^\[^\n\r *]*$reprompt"	{
-						    send_user -- "$expect_out(buffer)"
-						    if {[string length $partition] != 0} {
-							lappend partitions $arules
-						    }
-						}
-		-re "^\[^\n\r]*$reprompt."	{
-						    send_user -- "$expect_out(buffer)"
-						    exp_continue
-						}
-		-re "\[^\r\n]*\[\n\r]+"		{
-						    send_user -- "$expect_out(buffer)"
-						    exp_continue
-						}
-	    }
-	    foreach {partition arules} $partitions {
-		foreach {arule} $arules {
-		    send -- "show aflex $arule partition $partition\r"
-		    expect {
-			-re "\b+"			{ exp_continue }
-			-re "^\[^\n\r *]*$reprompt"	{
-							    send_user -- "$expect_out(buffer)"
-							    if {[string length $partition] != 0} {
-								lappend partitions $arules
-							    }
-							}
-			-re "^\[^\n\r]*$reprompt."	{
-							    send_user -- "$expect_out(buffer)"
-							    exp_continue
-							}
-			-re "\[^\r\n]*\[\n\r]+"		{
-							    send_user -- "$expect_out(buffer)"
-							    exp_continue
-							}
-		    }
-		}
-	    }
-	} else {
-	    expect {
-		-re "\b+"			{ exp_continue }
-		-re "^\[^\n\r *]*$reprompt"	{ send_user -- "$expect_out(buffer)" }
-		-re "^\[^\n\r]*$reprompt."	{
-						    send_user -- "$expect_out(buffer)"
-						    exp_continue
-						}
-		-re "\[^\r\n]*\[\n\r]+"		{
-						    send_user -- "$expect_out(buffer)"
-						    exp_continue
-						}
-	    }
+	expect {
+	    -re "\b+"			{ exp_continue }
+	    -re "^\[^\n\r *]*$reprompt"	{ send_user -- "$expect_out(buffer)" }
+	    -re "^\[^\n\r]*$reprompt."	{
+					  send_user -- "$expect_out(buffer)"
+					  exp_continue
+					}
+	    -re "\[^\r\n]*\[\n\r]+"	{
+					  send_user -- "$expect_out(buffer)"
+					  exp_continue
+					}
 	}
     }
     log_user 1

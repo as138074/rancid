@@ -1,6 +1,6 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in 3446 2016-08-12 21:46:09Z heas $
+## $Id: control_rancid.in 3518 2016-11-30 00:41:36Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
@@ -157,7 +157,7 @@ if [ $RCSSYS != "cvs" -a $RCSSYS != "svn" -a $RCSSYS != "git" ] ; then
     exit 1
 fi
 
-# the receipient(s) of diffs & mail options
+# the recipient(s) of diffs & mail options
 mailrcpt=${mailrcpt:-"@MAILPLUS@${GROUP}${MAILDOMAIN}"}; export mailrcpt
 adminmailrcpt=${adminmailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
 export adminmailrcpt
@@ -175,12 +175,31 @@ if [ $MAX_ROUNDS -lt 0 ] ; then
     MAX_ROUNDS=1
 fi
 
+# Check for missing configs dir.
+if [ ! -d $DIR/configs ] ; then
+    mkdir $DIR/configs
+    if [ $? -ne 0 ] ; then
+	echo "Error: could not create missing configs directory" >&2
+	exit
+    fi
+    case $RCSSYS in
+    cvs | svn)
+	$RCSSYS add configs
+	;;
+    esac
+fi
+
 # create a .cvsignore/.gitignore
 case $RCSSYS in
 git )
     if [ ! -f .gitignore ] ; then
 	touch .gitignore
 	git add .gitignore
+    else
+	git ls-files .gitignore --error-unmatch > /dev/null 2>&1
+	if [ $? -ne 0 ] ; then
+	    git add .gitignore
+	fi
     fi
     rm -rf .gitignore
     cat > .gitignore <<EOF
@@ -192,7 +211,6 @@ git )
 .old
 *.new
 *.raw
-*.swp
 EOF
     if [ -f .gitignore.locale ] ; then
 	cat .gitignore.locale >> .gitignore
@@ -248,7 +266,7 @@ if [ -f rancid.conf ] ; then
 	LN=`(svn ls rancid.conf | wc -l) 2>/dev/null`
 	;;
     git )
-	git status -s rancid.conf | grep '^?'
+	git ls-files rancid.conf --error-unmatch > /dev/null 2>&1
 	if [ $? -eq 0 ] ; then LN=1; else LN=0; fi
         ;;
     esac
@@ -454,7 +472,7 @@ for router in `cut -d\; -f1 ../routers.up` ; do
 	git status $router | grep '^?' > /dev/null 2>&1
 	if [ $? -eq 0 ] ; then
 	    git add $router
-	    git commit -m "new router: $router" $router
+	    git commit -m 'new router' $router
 	    echo "$RCSSYS added missing router $router"
 	fi
         ;;
@@ -492,6 +510,7 @@ if [ ! -s routers.up ] ; then
     git )
 	git add router.db
 	git commit -am "$message"
+	git push
 	;;
     esac
     exit;
@@ -621,7 +640,7 @@ if [ "X$device" != "X" ] ; then
     subject="$GROUP/$device $subject"
 else
     if [ $RCSSYS = git ] ; then
-        $RCSSYS commit -am "updates on $(date)"
+	$RCSSYS commit -am updates
     else
 	$RCSSYS commit -m updates
     fi
