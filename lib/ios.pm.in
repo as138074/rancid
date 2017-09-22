@@ -2302,7 +2302,7 @@ TOP:
 		#  permit udp any eq 123 any
 		#
 		# line might begin with " sequence nnn permit ..."
-		s/^\s+(sequence (\d+)) / /;
+		#s/^\s+(sequence (\d+)) / /;
 		my($seq) = $1;
 		my($cmd, $resid) = ($_ =~ /^\s+(\w+) (.+)/);
 		if ($cmd =~ /(permit|deny)/) {

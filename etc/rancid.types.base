@@ -419,7 +419,7 @@ juniper;command;junos::ShowChassisSCB;show chassis cfeb
 juniper;command;junos::ShowChassisAlarms;show chassis alarms
 juniper;command;junos::ShowSystemLicense;show system license
 juniper;command;junos::ShowSystemBootMessages;show system boot-messages
-juniper;command;junos::ShowSystemCoreDumps;show system core-dumps
+#juniper;command;junos::ShowSystemCoreDumps;show system core-dumps
 juniper;command;junos::ShowVersion;show version detail
 juniper;command;junos::ShowVersion;show version invoke-on other-routing-engine
 juniper;command;junos::ShowConfiguration;show configuration
