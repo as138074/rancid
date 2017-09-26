@@ -2275,7 +2275,7 @@ TOP:
 	    ProcessHistory("EACL $1 $2","$aclsort","0.0.0.0","$_") && next;
 	}
 	if ($aclfilterseq) {
-	    /^ip(v6)? prefix-list\s+(\S+)\s+seq\s+(\d+)\s+(permit|deny)\s+(\S+)(.*)/
+	    /^ip(v6)? prefix-list\s+(\S+)\s+(\d+)\s+(permit|deny)\s+(\S+)(.*)/
 		&& ProcessHistory("PACL $2 $4","$aclsort","$5",
 				  "ip$1 prefix-list $2 $4 $5$6\n")
 		&& next;
