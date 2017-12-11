@@ -406,6 +406,21 @@ sub ShowINT {
     return(0);
 }
 
+sub ShowInDesc {
+    print STDERR "    In ShowInDesc: $_" if ($debug);
+
+    while (<INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /(Invalid input|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+	ProcessHistory("COMMENTS","keysort","Description","!Description: $_");
+    }
+    ProcessHistory("COMMENTS","keysort","Description","!\n");
+    return(0);
+}
+
 # This routine processes a "write term"
 sub WriteTerm {
     print STDERR "    In WriteTerm: $_" if ($debug);
@@ -590,6 +605,7 @@ sub WriteTerm {
 	{'show inventory'		=> 'ShowInventory'},
 	{'show vlan'			=> 'ShowVLAN'},
 	{'show int status'		=> 'ShowINT'},
+	{'show int desc'		=> 'ShowInDesc'},
 	{'show running'			=> 'WriteTerm'}
 );
 # Use an array to preserve the order of the commands and a hash for mapping
