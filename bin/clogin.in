@@ -1,6 +1,6 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in 3803 2018-05-17 23:04:39Z heas $
+## $Id: clogin.in 3943 2019-01-18 16:18:34Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -76,11 +76,12 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	    }
 
 	    # handle escaped ;s in commands, and ;; and ^;
-	    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
-	    regsub {^;} $esccommand "\u002;" command
-	    set sep "\\1\u001"
-	    regsub -all {([^\\])\;} $command "$sep" esccommand
-	    set sep "\u001"
+	    regsub -all {([^\\]);} $command "\\1\u0002;" esccommand
+	    regsub -all {([^\\]);;} $esccommand "\\1;\u0002;" command
+	    regsub {^;} $command "\u0002;" esccommand
+	    regsub -all {[\\];} $esccommand ";" command
+	    regsub -all {\u0002;} $command "\u0002" esccommand
+	    set sep "\u0002;"
 	    set commands [split $esccommand $sep]
 	    set num_commands [llength $commands]
 	    set rshfail 0
@@ -356,13 +357,17 @@ proc do_enable { enauser enapasswd } {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global do_saveconfig in_proc platform
+    global do_interact do_saveconfig in_proc platform
     set in_proc 1
 
     if { [string compare "extreme" "$platform"] } {
-	# match cisco config mode prompts too, such as router(config-if)#,
-	# but catalyst does not change in this fashion.
-	regsub -lineanchor -- {^(.{1,11}).*([#>])$} $prompt {\1} reprompt
+	# match cisco config mode prompts too, such as router(config-if)#
+	# and truncatedr(config-if)#.
+	# catalyst does not change in this fashion, but does have its
+	# abnormal format, router> (enable).
+	# first, drop the "> (enable) " from the catos prompt.
+	regsub -lineanchor -- {> *\\\(enable\\\) *} $prompt {} reprompt
+	regsub -lineanchor -- {^(.{1,11}).*([#>])$} $reprompt {\1} reprompt
 	regsub -all -- {[\\]$} $reprompt {} reprompt
 	append reprompt {([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?}
     } else {
@@ -373,24 +378,21 @@ proc run_commands { prompt command } {
     log_user 0
 
     # handle escaped ;s in commands, and ;; and ^;
-    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
-    regsub {^;} $esccommand "\u002;" command
-    set sep "\\1\u001"
-    regsub -all {([^\\])\;} $command "$sep" esccommand
-    set sep "\u001"
+    regsub -all {([^\\]);} $command "\\1\u0002;" esccommand
+    regsub -all {([^\\]);;} $esccommand "\\1;\u0002;" command
+    regsub {^;} $command "\u0002;" esccommand
+    regsub -all {[\\];} $esccommand ";" command
+    regsub -all {\u0002;} $command "\u0002" esccommand
+    set sep "\u0002"
     set commands [split $esccommand $sep]
     set num_commands [llength $commands]
     # the pager can not be turned off on the PIX, so we have to look
     # for the "More" prompt.  the extreme is equally obnoxious in pre-12.3 XOS,
     # with a global switch in the config.
     for {set i 0} {$i < $num_commands} { incr i} {
-	if { [lindex $commands $i] == "\u002" } {
-	    send -- "\r"
-	} else {
-	    send -- "[subst -nocommands [lindex $commands $i]]\r"
-	}
+	send -- "[subst -nocommands [lindex $commands $i]]\r"
 	expect {
-	    -re "\b+"				{ exp_continue }
+	    -re "^\b+"				{ exp_continue }
 	    -re "^\[^\n\r *]*$reprompt"		{ send_user -- "$expect_out(buffer)"
 						}
 	    -re "^\[^\n\r]*$reprompt."		{ send_user -- "$expect_out(buffer)"
@@ -426,6 +428,11 @@ proc run_commands { prompt command } {
 	}
     }
     log_user 1
+
+    if { $do_interact == 1 } {
+	interact
+	return 0
+    }
 
     if { [string compare "extreme" "$platform"] } {
 	send -h "exit\r"
@@ -591,7 +598,7 @@ foreach router [lrange $argv $i end] {
     # Figure out prompts
     set u_prompt [find userprompt $router]
     if { "$u_prompt" == "" } {
-	set u_prompt "(\[Uu]sername|Login|login|user name|User):"
+	set u_prompt "(\[Uu]sername|\[Ll]ogin|\[Uu]ser \[Nn]ame|User):"
     } else {
 	set u_prompt [join [lindex $u_prompt 0] ""]
     }
@@ -678,13 +685,13 @@ foreach router [lrange $argv $i end] {
 				  set platform "extreme"
 				}
 	-re "^.+$reprompt"	{ set junk $expect_out(0,string);
-				  regsub -all "\[\]\[\(\)+]" $junk {\\&} prompt;
+				  regsub -all "\[\]\[\(\)\*+]" $junk {\\&} prompt;
 				}
     }
     if { $do_command || $do_script } {
 	if { [string compare "extreme" "$platform"] } {
-	    # If the prompt is (enable), then we are on a switch and the
-	    # command is "set length 0"; otherwise its "terminal length 0".
+	    # If the prompt is (enable), then we are on a cataylyst switch and
+	    # the command is "set length 0"; otherwise its "terminal length 0".
 	    if [regexp -- ".*> .*enable" "$prompt"] {
 		send "set length 0\r"
 		expect -re $prompt  	{}

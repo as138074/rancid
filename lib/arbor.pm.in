@@ -1,6 +1,6 @@
 package arbor;
 ##
-## $Id: arbor.pm.in 3729 2017-09-15 17:02:29Z heas $
+## $Id: arbor.pm.in 3960 2019-01-24 18:21:02Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -26,6 +26,8 @@ sub import {
     # Seems that it might also support "dumb".
     $ENV{'TERM'} = "vt100";
 
+    $timeo = 240;			# anlogin timeout in seconds
+
     0;
 }
 
@@ -50,7 +52,7 @@ TOP: while(<$INPUT>) {
 	if (/^Error:/) {
 	    print STDOUT ("$host anlogin error: $_");
 	    print STDERR ("$host anlogin error: $_") if ($debug);
-	    $clean_run=0;
+	    $clean_run = 0;
 	    last;
 	}
 	while (/[#>]\s*($cmds_regexp)\s*$/) {

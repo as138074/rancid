@@ -50,6 +50,17 @@ arbor;command;arbor::ShowVersion;system version
 arbor;command;arbor::ShowHardware;system hardware
 arbor;command;arbor::ShowConfig;config show
 #
+# Arrcus
+arcos;script;rancid -t arcos
+arcos;login;xilogin
+arcos;module;arcos
+arcos;inloop;arcos::inloop
+arcos:command;rancid::RunCommand;timestamp disable 
+arcos;command;arcos::ShowVersion;show version
+arcos;command;arcos::ShowFeatures;show features
+arcos;command;arcos::ShowHardware;show hardware
+arcos;command;arcos::WriteTerm;show running-config
+#
 arista;script;rancid -t arista
 arista;login;clogin
 arista;module;aeos
@@ -95,7 +106,10 @@ ciena-ws;timeout;120
 ciena-ws;module;wavesvros
 ciena-ws;inloop;wavesvros::inloop
 ciena-ws;command;wavesvros::ShowVersion;software show
+ciena-ws;command;wavesvros::GenericCmd;license file list
 ciena-ws;command;wavesvros::ShowChassis;chassis show
+ciena-ws;command;wavesvros::GenericCmd;blade show
+ciena-ws;command;wavesvros::GenericCmd;alarm show
 ciena-ws;command;wavesvros::WriteTerm;configuration show
 #
 # Cisco Catalyst 5k (all catalyst o/s switches)
@@ -160,6 +174,7 @@ cisco;command;ios::ShowContCbus;show controllers cbus
 cisco;command;ios::ShowDiagbus;show diagbus
 cisco;command;ios::ShowDiag;show diag
 cisco;command;ios::ShowCapture;show capture;ASA/PIX
+cisco;command;ios::ShowModule;show module switch;c6500 ios vss
 cisco;command;ios::ShowModule;show module;c6500 ios
 cisco;command;ios::ShowSpeVersion;show spe version
 cisco;command;ios::ShowC7200;show c7200
@@ -219,7 +234,8 @@ cisco-nx;command;nxos::ShowFex;show fex
 cisco-nx;command;nxos::WriteTerm;show running-config
 #
 # Cisco small business devices.  These are peculiar; most likely this will not
-# work with all of them.
+# work with all of them, but is also reported to work with other Marvell OEMs,
+# including PowerConnect 5448
 cisco-sb;script;rancid -t cisco-sb
 cisco-sb;login;csblogin
 cisco-sb;module;iossb
@@ -391,15 +407,31 @@ bigip13;command;rancid::RunCommand;modify cli preference pager disabled display-
 bigip13;command;bigip::ShowVersion;show sys version
 bigip13;command;bigip::ShowHardware;show sys hardware
 bigip13;command;bigip::ShowLicense;show sys license 
-bigip13;command;bigip::ShowRouteStatic;show /net route static
+bigip13;command;bigip::RunCommandTMSH;cd /
+bigip13;command;bigip::ShowRouteStatic;show /net recursive route static
 bigip13;command;bigip::WriteTerm;list all-properties recursive
 #
 # Force 10 and Dell Force10.
 force10;script;f10rancid
 force10;login;clogin
 #
-fortigate;script;fnrancid
+# Fortinet Fortigate firewall
+# Normal or FULL configuration
+fortigate;script;rancid -t fortigate
 fortigate;login;fnlogin
+fortigate;timeout;90
+fortigate;module;fortigate
+fortigate;inloop;fortigate::inloop
+fortigate;command;fortigate::GetSystem;get system status
+fortigate;command;fortigate::GetConf;show
+#
+fortigate-full;script;rancid -t fortigate
+fortigate-full;login;fnlogin
+fortigate-full;timeout;90
+fortigate-full;module;fortigate
+fortigate-full;inloop;fortigate::inloop
+fortigate-full;command;fortigate::GetSystem;get system status
+fortigate-full;command;fortigate::GetConf;show full-configuration
 #
 # Foundry and HP procurve OEMs of Foundry (Brocade ICX-6450s, HP9304M).
 # Reportedly functional on:
@@ -484,6 +516,7 @@ juniper;module;junos
 juniper;inloop;junos::inloop
 juniper;command;junos::ShowChassisClocks;show chassis clocks
 juniper;command;junos::ShowChassisEnvironment;show chassis environment
+juniper;command;junos::ShowChassisFirmware;show chassis firmware local
 juniper;command;junos::ShowChassisFirmware;show chassis firmware
 juniper;command;junos::ShowChassisFpcDetail;show chassis fpc detail
 juniper;command;junos::ShowChassisHardware;show chassis hardware detail
@@ -582,9 +615,8 @@ paloalto;script;rancid -t paloalto
 paloalto;login;panlogin
 paloalto;module;panos
 paloalto;inloop;panos::inloop
-paloalto;command;rancid::RunCommand;set cli scripting-mode on
-paloalto;command;rancid::RunCommand;set cli pager off
 paloalto;command;panos::ShowInfo;show system info
+paloalto;command;panos::ShowInventory;show chassis inventory
 paloalto;command;panos::ShowConfig;show config running
 #
 procket;script;prancid

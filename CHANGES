@@ -1,3 +1,151 @@
+3.9
+	ios.pm: add show module switch for 6500 vss data - Per-Olof Olsson
+
+	arcos.pm: add tacacs key filter
+
+	arcos.pm: fix prompt handling - WIP
+
+	noklogin: exit if pager disable command is not permitted
+
+	xilogin: handle pager disable for arcos
+
+	junos.pm: add ShowSystemConfDB()
+
+	sros.pm: ignore Error: Bad command. error msg form older sros devices
+
+	ciscowlc.pm: filter mgig temperature - Erik Muller
+
+	anlogin: make the pty allocation the same as in jlogin
+
+	dell.pm: powerconnect N[234]000 do not reliably echo the <CR> after
+	exit - Wayne Eisenberg
+
+	clogin: new variation of username prompt - Wayne Eisenberg
+
+	wlogin: fix prompt match in run_commands() which was failing for longer
+	hostnames/prompts - Erik Muller
+
+	bigip: add "cd /" command for v13 to collect all routes - Wouter de Jong
+
+	nxos.pm: recognize older SAN nexus devices - Wouter de Jong
+
+	a10login: handle logout prompt variation for older ACOS - Wouter de Jong
+
+	junos.pm: handle show chassis firmware bug for 11.x on EX - Wouter de
+	Jong
+
+	panos.pm: ignore show chassis inventory on invalid syntax
+
+	sros.pm: remove duplication of chassis type - Greg Hankins
+
+	sros.pm: restore chassis type line - Greg Hankins
+
+	panos.pm: add show chassis inventory - Erik Muller
+
+	nxos.pm: filter bcm_mem_lock_trace.log since ~7.0.3 - Erik Muller
+
+	hlogin: send \r rather than <sp> for "Press any key to continue" to
+	work-around apparant bug - Benoit Dolez
+
+	panlogin: move scripting mode and pager disabling from command list to
+	panlogin to work-around complete-on-space {mis-}feature added around
+	8.1.4 - Erik Muller
+
+	sros.pm: restore chassis type from bootlog.txt
+
+	clogin: fix problem with catos prompt
+
+	sros.pm: take chassis s/n from bootlog.txt
+
+	*login: adjust the command separated used within; tcl <8.6 does not
+	recognize u002 and u0002 as the same value, which caused a regex
+	compilation failure
+
+	clogin: ArubaOS >~8.3 has a '*' which must be escaped in prompt
+	matching -PJ Goodwin
+
+	*login: backout send-human change in previous commit, where it wasnt
+	before.  W/O an appropriate adjustment of the send-human variables,
+	it was killing performance.
+
+	*login: address bug in escaping empty commands of -[cx]
+
+	sros.pm: use file type debug command only for total memory and card type
+
+	panlogin: copy/customize last/failed login match from clogin
+
+	fnlogin: accept new banner prompt at login - Ni Ne
+
+	ciscowlc.pm: the device may not echo the \r\n at logout
+
+	fss2: filter sys-uptime
+
+	anlogin, jlogin, noklogin: use spawnopts spawning ssh/telnet
+
+	nxos.pm: GC unused variables
+
+	fortigate: rename fortigate device type to fortigate-full and re-create
+	the fortigate type with 'show' (not 'full-configuration')
+
+	anlogin: use login_top
+
+	sros.pm: take chassis type and s/n from show chassis instead of boot.log
+
+	noklogin: remove ^H handling; its consuming too much
+
+	arbor.pm: increase anlogin timeout for slow cli commands
+
+	noklogin: allocate a pty if not on a tty & set term width
+
+	iosxr: DirSlotN(): drop fileno from oscillating files to ignore the
+	rotation by renaming behavior seen with ce_switch.log and sort all
+	files by filename
+
+	iosxr: also ignore ce_switch.log*
+
+	*login: add -i option
+
+	arcos.pm: initial arcos support - WIP
+
+	anlogin: copy last/failed login match from clogin
+
+	nxos.pm: also ignore accounting_log.0 - Pavel Korovin
+
+	srancid: prevent ShowSys() power supply handling from consuming too much
+
+	fortigate: filter INDUSTRIAL-DB version - Chris Wopat
+
+	nxos.pm: filter out oscillating data from transceivers - Pavel Korovin
+
+	fortigate: wrap other DB signatures within FILTER_OSC
+
+	hlogin: allow prompts with ()s, still not a good idea imo
+
+	fxlogin: missing escape in regex - Erik Muller
+
+	wavesvros.pm: add cmds license file list, blade show, & alarm show
+
+	fortigate.pm: GC unnecessary output spacers & fix comment character -
+	Nick Nauwelaerts
+
+	fnlogin: fix logout sequence in run_commands() & used -h option of send
+
+	fnrancid, fortigate.pm: convert fortigate to module
+
+	waverserver.pm: filter power support wattage, new in waveserveros 1.6
+
+	nxos.pm: in ShowEnvTemp() sub-input loop, catch prompt - Scott McInness
+
+	jlogin: skip login tips that look like prompts, like:
+	JUNOS tip:
+	Use the configuration statement [system login class <name> login-tip]
+
+	rancid.conf.sample: note ALL option FILTER_OSC
+
+	fnrancid: filter db version stamps wrapped in FILTER_OSC - Chris Wopat
+
+	ulogin: parse (ignore) last (failed) login message at login time
+
 3.8
 	nxos.pm: ShowEnv() missing prompt handling & CR filter - Frank Mogaddedi
 

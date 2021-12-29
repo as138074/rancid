@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 3808 2018-05-30 19:57:37Z heas $
+## $Id: Makefile.am 3854 2018-08-10 12:33:50Z heas $
 ##
 ## Copyright (c) 1997-2018 by Henry Kilmer and John Heasley
 ## All rights reserved.
@@ -16,7 +16,7 @@ bin_SCRIPTS = a10login alogin agmrancid anlogin arancid \
 	avologin avorancid blogin brancid brlogin cat5rancid clogin \
 	control_rancid csblogin cssrancid \
 	dllogin elogin erancid f5rancid f10rancid \
-	flogin fnlogin fnrancid fxlogin hlogin hrancid htlogin \
+	flogin fnlogin fxlogin hlogin hrancid htlogin \
 	htrancid jerancid jlogin mrancid mrvlogin mtlogin mtrancid \
 	nlogin noklogin nrancid nslogin nsrancid panlogin plogin \
 	rancid rblogin rivlogin \
