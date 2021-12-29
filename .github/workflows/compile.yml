@@ -3,8 +3,7 @@ name: Compile the package
 on:
   push:
     branches:
-      - development/*
-      - upstream/*
+      - development
 
 jobs:
   compile:
