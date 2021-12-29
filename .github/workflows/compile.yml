@@ -1,0 +1,32 @@
+name: Compile the package
+
+on: [push]
+
+jobs:
+  compile:
+    runs-on: [self-hosted]
+    steps:   
+      - name: Checkout Code Repository
+        uses: actions/checkout@v2
+        
+      - name: update repository
+        shell: bash
+        run: sudo apt update -qq
+      
+      - name: install package dependencies
+        shell: bash
+        run: |
+          sudo apt install -y automake cvs expect iputils-ping perl po-debconf \
+            telnet openssh-client build-essential
+      
+      - name: run configure
+        shell: bash
+        run: ./configure
+      
+      - name: Run make
+        shell: bash
+        run: make
+      
+      - name: Clean up
+        shell: bash
+        run: make clean
