@@ -1,6 +1,6 @@
 package ciscowlc;
 ##
-## $Id: ciscowlc.pm.in 3444 2016-08-10 16:25:47Z heas $
+## $Id: ciscowlc.pm.in 3815 2018-06-06 14:46:24Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -24,7 +24,6 @@ use rancid @VERSION@;
 
 # load-time initialization
 sub import {
-    $timeo = 90;			# wlogin timeout in seconds
     0;
 }
 
@@ -43,7 +42,7 @@ sub inloop {
 
 TOP: while(<$INPUT>) {
 	tr/\015//d;
-	if (/^.*logout(Connection.*closed.)?$/)  {
+	if (/^.*logout(\s*Connection.*closed.*)?$/)  {
 	    $clean_run = 1;
 	    last;
 	}
@@ -67,7 +66,7 @@ TOP: while(<$INPUT>) {
 		last TOP;
 	    }
 	    if (! defined(&{$commands{$cmd}})) {
-		printf(STDERR "$host: undefined function - \"%s\"\n",  
+		printf(STDERR "$host: undefined function - \"%s\"\n",
 		       $commands{$cmd});
 		$clean_run = 0;
 		last TOP;
@@ -94,7 +93,8 @@ sub ShowConfig {
         tr/\020//d;
 
 	next if (/^\s*rogue ap classify/);
-	next if (/^\s*rogue (adhoc|client) alert/);
+	next if (/^\s*rogue (adhoc|client) (alert|unknown)/i);
+	next if (/^\s*interface nat-address management set -?[0-9]{4,}\./);
 
 	$linecnt++;
 
@@ -123,12 +123,10 @@ sub ShowConfig {
 
 	$linecnt++;
 	if (! /^$prompt/) {
-	    print(STDERR "      ShowConfig Data: $_") if ($debug);
 	    ProcessHistory("","","","$_");
 	}
     }
     ProcessHistory("","","","\n!--WLC End Config Data--!\n");
-    print STDERR "    Exiting ShowConfig: $_" if ($debug);
     # WLC lacks a definitive "end of config" marker.
     if ($linecnt > 5) {
 	$found_end = 1;
@@ -152,6 +150,7 @@ sub ShowSysinfo {
 	if (/^fan status/i) { $skipprocess = 1; }
 	if (/^Number of Active Clients/) { $skipprocess = 1; }
 	if (/^OUI Classification Failure Count/) { $skipprocess = 1; }
+	if (/^(memory|cpu) (current|average)/i) { $skipprocess = 1; }
 	if (/^(internal|external) temperature/i) { $skipprocess=1; }
 	if (/rpm$/) { $skipprocess = 1; }
 
@@ -159,13 +158,11 @@ sub ShowSysinfo {
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	if (! /^$prompt/) {
 		if (! $skipprocess) {
-			print STDERR "      ShowSysinfo Data: $_" if ($debug);
 			ProcessHistory("","","","! $_");
 		}
 	}
     }
     ProcessHistory("","","","!\n!WLC Show Sysinfo End\n");
-    print STDERR "    Exiting ShowSysinfo: $_" if ($debug);
     return(0);
 }
 
@@ -180,11 +177,9 @@ sub ShowUdi {
 
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	print STDERR "      ShowUdi Data: $_" if ($debug);
 	ProcessHistory("","","","! $_");
     }
     ProcessHistory("","","","!\n!WLC Show Udi End\n");
-    print STDERR "    Exiting ShowSysinfo: $_" if ($debug);
     return(0);
 }
 

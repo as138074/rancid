@@ -1,6 +1,6 @@
 package dell;
 ##
-## $Id: dell.pm.in 3226 2016-01-15 21:41:54Z heas $
+## $Id: dell.pm.in 3699 2017-07-18 13:40:55Z heas $
 ##
 ## fnrancid patched to dlrancid to accomplish D-Link support
 ## adapted by: Gavin McCullagh <gmccullagh at gmail.com>
@@ -40,9 +40,6 @@ our $found_version;
 
 # load-time initialization
 sub import {
-    $timeo = 300;		# dllogin timeout in seconds (some of these
-				# devices are remarkably slow to read config)
-
     0;
 }
 

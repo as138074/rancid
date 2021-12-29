@@ -1,6 +1,6 @@
 package junos;
 ##
-## $Id: junos.pm.in 3462 2016-09-12 20:33:41Z heas $
+## $Id: junos.pm.in 3788 2018-04-06 23:42:45Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -26,8 +26,6 @@ our $ShowChassisSCB;			# Only run ShowChassisSCB() once
 
 # load-time initialization
 sub import {
-    $timeo = 120;			# jlogin timeout in seconds
-
     0;
 }
 
@@ -409,20 +407,34 @@ sub ShowSystemLicense {
 	next if (/^\{(master|backup)(:\d+)?\}/);
 
 	# licenses used changes constantly.  distill it to a percentage.
-	if (/^(\s+scale-subscriber)(\s+)(\d+)(\s+\d+)(.*$)/) {
+	# example input:
+	# License usage:
+	#                                  Licenses     Licenses    Licenses    Expiry
+	#   Feature name                       used    installed      needed
+	#   dynamic-vpn                           1            2           0    permanent
+	if (/^(\s+(?:VMX|dynamic|mobile|scale|service|scale-subscriber|subscriber)-\S+)(\s+)(\d+)(\s+\d+)(.*$)/) {
 	    my($a, $sp, $used, $avail, $rem) = ($1, $2, $3, $4, $5);
 	    my($spl, $usedl) = (length($sp), length($used));
-	    my($pcnt);
+	    my($pcnt, $usage, $usagel);
 	    if ($avail < 1) {
 		$pcnt = ">100";
 	    } else {
-		$pcnt = int(($used + 0.0) / ($avail + 0.0) * 100);
+		if ($filter_osc >= 2) {
+		    $usage = "--";
+		} elsif ($avail < 100) {
+		    # if license count is small, percentage doesn't do much to
+		    # stabilize the output - just skip it.
+		    $usage = "--";
+		} else {
+		    $pcnt = int(($used + 0.0) / ($avail + 0.0) * 100);
+		    $usage = sprintf("%s%%", $pcnt);
+		}
 	    }
-	    my($pcntl) = length($pcnt) + 1;
-	    $spl = $spl + $usedl - $pcntl;
+	    $usagel = length($usage) ;
+	    $spl = $spl + $usedl - $usagel;
 
-	    my($fmt) = "%s%-" . $spl . "s%s%%%s%s\n";
-	    $_ = sprintf($fmt, $a, "", $pcnt, $avail, $rem);
+	    my($fmt) = "%s%-" . $spl . "s%s%s%s\n";
+	    $_ = sprintf($fmt, $a, "", $usage, $avail, $rem);
 	}
 
 	/Unrecognized command/ && return(1);
@@ -501,6 +513,7 @@ sub ShowVersion {
 	next if (/^system (shutdown message from|going down )/i);
 	next if (/^\{(master|backup)(:\d+)?\}/);
 	/error: abnormal communication termination with / && return(-1);
+	/error: could not connect to \S+ : no route to host/i && return(-1);
 
 	/warning: .* subsystem not running - not needed by configuration/ && next;
 
@@ -531,6 +544,7 @@ sub ShowConfiguration {
 	    last;
 	}
 	next if (/^system (shutdown message from|going down )/i);
+	next if (/^## last commit: /i);
 	next if (/^\{(master|backup)(:\d+)?\}/);
 	next if (/^\{(primary|secondary)(:\d+)?\}/);
 	$lines++;

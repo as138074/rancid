@@ -1,11 +1,19 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: mrvlogin.in 3636 2017-04-13 17:45:01Z heas $
+## $Id: clogin.in 3519 2016-12-01 00:23:58Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
-# mrvlogin - MRV login
+# clogin - Cisco login
+#
+# Most options are intuitive for logging into a Cisco router.
+# The default is to enable (thus -noenable).  Some folks have
+# setup tacacs to have a user login at priv-lvl = 15 (enabled)
+# so the -autoenable flag was added for this case (don't go through
+# the process of enabling and the prompt will be the "#" prompt.
+# The default username password is the same as the vty password.
+#
 
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
@@ -15,10 +23,10 @@ set send_human {.2 .1 .4 .2 1}
 @login_top@
 
 # Log into the router.
-# returns: 0 on success, 1 on failure
-proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
-    global command spawn_id in_proc do_command do_script
-    global prompt u_prompt p_prompt e_prompt sshcmd telnetcmd
+# returns: 0 on success, 1 on failure, -1 if rsh was used successfully
+proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile } {
+    global command spawn_id in_proc do_command do_script passphrase
+    global prompt prompt_match u_prompt p_prompt e_prompt sshcmd telnetcmd
     set in_proc 1
     set uprompt_seen 0
 
@@ -29,15 +37,24 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog methcmd suffix port
 	    if {"$port" == ""} {
-		set retval [ catch {eval spawn [split "$telnetcmd $router"]} reason ]
+		if { $do_command || $do_script } {
+		    set retval [catch {eval spawn [split "hpuifilter -- $telnetcmd $router"]} reason]
+		} else {
+		    set retval [catch {eval spawn [split "$telnetcmd $router"]} reason]
+		}
 	    } else {
-		set retval [ catch {eval spawn [split "$telnetcmd $router $port"]} reason ]
+		if { $do_command || $do_script } {
+		    set retval [catch {eval spawn [split "hpuifilter -- $telnetcmd $router $port"]} reason]
+		} else {
+		    set retval [catch {eval spawn [split "$telnetcmd $router $port"]} reason]
+		}
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
 		return 1
 	    }
 	} elseif [string match "ssh*" $prog] {
+	    # ssh to the router & try to login with or without an identfile.
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
 	    set cmd $sshcmd
 	    if {"$port" != ""} {
@@ -46,11 +63,96 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    if {"$cyphertype" != ""} {
 		set cmd "$cmd -c $cyphertype"
 	    }
-	    set retval [ catch {eval spawn [split "$cmd -x -l $user $router" { }]} reason ]
+	    if {"$identfile" != ""} {
+		set cmd "$cmd -i $identfile"
+	    }
+	    if { $do_command || $do_script } {
+		set retval [catch {eval spawn hpuifilter -- [split "$cmd -x -l $user $router" { }]} reason]
+	    } else {
+		set retval [catch {eval spawn [split "$cmd -x -l $user $router" { }]} reason]
+	    }
 	    if { $retval } {
-		send_user "\nError: $sshcmd failed: $reason\n"
+		send_user "\nError: $cmd failed: $reason\n"
 		return 1
 	    }
+	} elseif ![string compare $prog "rsh"] {
+	    if { ! $do_command } {
+		if { [llength $cmethod] == 1 } {
+		    send_user "\nError: rsh is an invalid method for -x and "
+		    send_user "interactive logins\n"
+		}
+		if { $progs == 0 } {
+		    return 1
+		}
+		continue;
+	    }
+
+	    # handle escaped ;s in commands, and ;; and ^;
+	    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
+	    regsub {^;} $esccommand "\u002;" command
+	    set sep "\\1\u001"
+	    regsub -all {([^\\])\;} $command "$sep" esccommand
+	    set sep "\u001"
+	    set commands [split $esccommand $sep]
+	    set num_commands [llength $commands]
+	    set rshfail 0
+	    for {set i 0} {$i < $num_commands && !$rshfail} { incr i} {
+		log_user 0
+		set retval [catch {spawn rsh $user@$router [lindex $commands $i] } reason]
+		if { $retval } {
+		    send_user "\nError: rsh failed: $reason\n"
+		    log_user 1; return 1
+		}
+		send_user "$router# [lindex $commands $i]\n"
+
+		# rcmd does not get a pager and no prompts, so we just have to
+		# look for failures & lines.
+		expect {
+		  "Connection refused"	{ catch {close}; catch {wait};
+					  send_user "\nError: Connection\
+						    Refused ($prog): $router\n"
+					  set rshfail 1
+					}
+		  -re "(Connection closed by|Connection to \[^\n\r]+ closed)" {
+					  catch {close}; catch {wait};
+					  send_user "\nError: Connection\
+						    closed ($prog): $router\n"
+					  set rshfail 1
+					}
+		  "Host is unreachable"	{ catch {close}; catch {wait};
+					  send_user "\nError: Host Unreachable:\
+						    $router\n"
+					  set rshfail 1
+					}
+		  "No address associated with" {
+					  catch {close}; catch {wait};
+					  send_user "\nError: Unknown host\
+						    $router\n"
+					  set rshfail 1
+					}
+		  -re "\b+"		{ exp_continue }
+		  -re "\[\n\r]+"	{ send_user -- "$expect_out(buffer)"
+					  exp_continue
+					}
+		  timeout		{ catch {close}; catch {wait};
+					  send_user "\nError: TIMEOUT reached\n"
+					  set rshfail 1
+					}
+		  eof			{ catch {close}; catch {wait}; }
+		}
+		log_user 1
+	    }
+	    if { $rshfail } {
+		if { !$progs } {
+		    return 1
+		} else {
+		    continue
+		}
+	    }
+	    # fake the end of the session for rancid.
+	    send_user "$router# exit\n"
+	    # return rsh "success"
+	    return -1
 	} else {
 	    send_user "\nError: unknown connection method: $prog\n"
 	    return 1
@@ -88,6 +190,11 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     # then it will just send the passwd.
     # if telnet fails with connection refused, try ssh
     expect {
+	-re "^<-+ More -+>\[^\n\r]*" {
+	    # ASA will use the pager for long banners
+	    send " ";
+	    exp_continue
+	}
 	-re "(Connection refused|Secure connection \[^\n\r]+ refused)" {
 	    catch {close}; catch {wait};
 	    if !$progs {
@@ -153,7 +260,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 				  send_user "\nError: Check your passwd for $router\n"
 				  catch {close}; catch {wait}; return 1
 				}
-	-re "Login (failed|incorrect)" {
+	"Login failed"		{
 				  send_user "\nError: Check your passwd for $router\n"
 				  catch {close}; catch {wait}; return 1
 				}
@@ -175,32 +282,44 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	-re "Last login:"	{
 				  exp_continue
 				}
+	-re "Press the <tab> key \[^\r\n]+\[\r\n]+"	{
+				  exp_continue
+				}
 	-re "@\[^\r\n]+ $p_prompt"	{
 				  # ssh pwd prompt
 				  sleep 1
-				  send -h -- "$userpswd\r"
+				  send -- "$userpswd\r"
+				  exp_continue
+				}
+	-re "Enter passphrase.*: " {
+				  # sleep briefly to allow time for stty -echo
+				  sleep .3
+				  send -- "$passphrase\r"
 				  exp_continue
 				}
 	-re "$u_prompt"		{
-				  send -h -- "$user\r"
+				  send -- "$user\r"
 				  set uprompt_seen 1
 				  exp_continue
 				}
 	-re "$p_prompt"		{
 				  sleep 1
 				  if {$uprompt_seen == 1} {
-					send -h -- "$userpswd\r"
+					send -- "$userpswd\r"
 				  } else {
-					send -h -- "$passwd\r"
+					send -- "$passwd\r"
 				  }
 				  exp_continue
 				}
-	-re "$prompt"		{ break; }
+	-re "$prompt"		{
+				  set prompt_match $expect_out(0,string);
+				  break;
+				}
 	"Login invalid"		{
 				  send_user "\nError: Invalid login: $router\n";
 				  catch {close}; catch {wait}; return 1
 				}
-	-re "\[^\r\n]\[\r\n]+"	{ exp_continue }
+	-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
      }
     }
 
@@ -210,15 +329,20 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 
 # Enable
 proc do_enable { enauser enapasswd } {
-    global prompt in_proc
-    global u_prompt e_prompt
+    global do_saveconfig in_proc
+    global prompt u_prompt e_prompt enacmd
     set in_proc 1
 
-    send -h "enable\r"
+    send "$enacmd\r"
     expect {
-	-re "$u_prompt"	{ send -h -- "$enauser\r"; exp_continue}
-	-re "$e_prompt"	{ send -h -- "$enapasswd\r"; exp_continue}
+	-re "$u_prompt"	{ send -- "$enauser\r"; exp_continue}
+	-re "$e_prompt"	{ send -- "$enapasswd\r"; exp_continue}
 	"#"		{ set prompt "#" }
+	"(enable)"	{ set prompt "> \\(enable\\) " }
+	"% Invalid input" {
+			  send_user "\nError: Unrecognized command, check your enable command\n";
+			  return 1
+			}
 	-re "(denied|Sorry|Incorrect)"	{
 			  # % Access denied - from local auth and poss. others
 			  send_user "\nError: Check your Enable passwd\n";
@@ -241,14 +365,14 @@ proc do_enable { enauser enapasswd } {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global in_proc
+    global do_saveconfig in_proc
     set in_proc 1
 
-    # match cisco config mode prompts too, such as router(config-if)#
-    regsub -lineanchor -- {^(.{1,11}).*([#>] *)$} $prompt {\1} reprompt
-    # escape any parens or escapes in the prompt
-    regsub -all -- {[)(\\]$} $reprompt {} reprompt
-    append reprompt {([^#>\r\n]+)?[#>]}
+    # match cisco config mode prompts too, such as router(config-if)#,
+    # but catalyst does not change in this fashion.
+    regsub -lineanchor -- {^(.{1,11}).*([#>])$} $prompt {\1} reprompt
+    regsub -all -- {[\\]$} $reprompt {} reprompt
+    append reprompt {([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?}
 
     # this is the only way i see to get rid of more prompts in o/p..grrrrr
     log_user 0
@@ -262,23 +386,28 @@ proc run_commands { prompt command } {
     set commands [split $esccommand $sep]
     set num_commands [llength $commands]
     # the pager can not be turned off on the PIX, so we have to look
-    # for the "More" prompt.  the extreme is equally obnoxious, with a
-    # global switch in the config.
-    # XXX I think the pager can be turned off and this is just an artifact of
-    #	  clogin
+    # for the "More" prompt.  the extreme is equally obnoxious in pre-12.3 XOS,
+    # with a global switch in the config.
     for {set i 0} {$i < $num_commands} { incr i} {
-	send -h -- "[subst -nocommands [lindex $commands $i]]\r"
+	if { [lindex $commands $i] == "\u002" } {
+	    send -- "\r"
+	} else {
+	    send -- "[subst -nocommands [lindex $commands $i]]\r"
+	}
 	expect {
 	    -re "\b+"				{ exp_continue }
 	    -re "^\[^\n\r *]*$reprompt"		{ send_user -- "$expect_out(buffer)"
 						}
 	    -re "^\[^\n\r]*$reprompt."		{ send_user -- "$expect_out(buffer)"
-						  exp_continue }
+						  exp_continue
+						}
 	    -re "^--More--\[\r\n]+"		{ # specific match c1900 pager
 						  send " "
-						  exp_continue }
-	    -re "\[\n\r]+"			{ send_user -- "$expect_out(buffer)"
-						  exp_continue }
+						  exp_continue
+						}
+	    -re "\[^\r\n]*\[\n\r]+"		{ send_user -- "$expect_out(buffer)"
+						  exp_continue
+						}
 	    -re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{
 						  send " "
 						  # bloody ^[[2K after " "
@@ -307,21 +436,42 @@ proc run_commands { prompt command } {
 						  send -h "exit\r"
 						  exp_continue;
 						}
-	"Would you like to save them now"	{ # Force10
-						  send "n\r"
+	"The system has unsaved changes"	{ # Force10 SFTOS
+						  if {$do_saveconfig} {
+						    catch {send "y\r"}
+						  } else {
+						    catch {send "n\r"}
+						  }
 						  exp_continue
 						}
-	"Configuration changes have occurred.*"	{ # Cisco CSS
-						  send "n\r"
+	"Would you like to save them now"	{ # Force10
+						  if {$do_saveconfig} {
+						    catch {send "y\r"}
+						  } else {
+						    catch {send "n\r"}
+						  }
+						  exp_continue
+						}
+	-re "(Profile|Configuration) changes have occurred.*"	{
+						  # Cisco CSS
+						  if {$do_saveconfig} {
+						    catch {send "y\r"}
+						  } else {
+						    catch {send "n\r"}
+						  }
 						  exp_continue
 						}
 	"Do you wish to save your configuration changes" {
-						  send "n\r"
+						  if {$do_saveconfig} {
+						    catch {send "y\r"}
+						  } else {
+						    catch {send "n\r"}
+						  }
 						  exp_continue
 						}
 	-re "\[\n\r]+"				{ exp_continue }
 	timeout					{ catch {close}; catch {wait};
-						  return 0
+						  return 1
 						}
 	eof					{ return 0 }
     }
@@ -334,6 +484,15 @@ proc run_commands { prompt command } {
 source_password_file $password_file
 set in_proc 0
 set exitval 0
+set prompt_match ""
+# if we have dont have a tty, we need some additional terminal settings
+if [catch {open /dev/tty w} ttyid] {
+    # no tty, ie: cron
+    set spawnopts "-nottycopy"
+    set stty_init "cols 132"
+} else {
+    catch {close ttyid} reason
+}
 foreach router [lrange $argv $i end] {
     set router [string tolower $router]
     send_user -- "$router\n"
@@ -344,30 +503,29 @@ foreach router [lrange $argv $i end] {
 	set timeout $timeoutdflt
     }
 
-    # Figure out the prompt.
-    # autoenable is off by default.  If we have it defined, it was done
-    # on the command line.  If it is not specifically set on the command
-    # line, check the password file.
-    if $avautoenable {
-	set autoenable 1
-	set enable 0
-	set prompt "#\[^\[:digit:]]"
-    } else {
-	set ae [find autoenable $router]
-	if { "$ae" == "1" } {
-	    set autoenable 1
-	    set enable 0
-	    set prompt "#\[^\[:digit:]]"
-	} else {
-	    set autoenable 0
-	    set enable $avenable
-	    set prompt ">"
-	}
+    # Default prompt.
+    set prompt [join [find prompt $router] ""]
+    if { [llength $prompt] == 0 } {
+	set prompt "(>|#| \\(enable\\))"
     }
 
-    # look for noenable option in .cloginrc
-    if { [find noenable $router] == "1" } {
+    # look for autoenable option in .cloginrc & cmd-line
+    set ae [find autoenable $router]
+    if { "$ae" == "1" || $avautoenable } {
+	set autoenable 1
+    } else {
+	set autoenable 0
+    }
+    # look for enable options in .cloginrc & cmd-line
+    if { $avenable == 0 } {
 	set enable 0
+    } else {
+	set ne [find noenable $router]
+	if { "$ne" == "1" || "$autoenable" == "1" } {
+	    set enable 0
+	} else {
+	    set enable 1
+	}
     }
 
     # Figure out passwords
@@ -415,16 +573,20 @@ foreach router [lrange $argv $i end] {
       if { "$enauser" == "" } { set enauser $ruser }
     }
 
+    # Figure out enable command
+    set enacmd [join [find enablecmd $router] ""]
+    if { "$enacmd" == "" } { set enacmd "enable" }
+
     # Figure out prompts
     set u_prompt [find userprompt $router]
     if { "$u_prompt" == "" } {
-	set u_prompt "(Username|Login|login|user name):"
+	set u_prompt "(\[Uu]sername|Login|login|\[Uu]ser \[Nn]ame|User):"
     } else {
 	set u_prompt [join [lindex $u_prompt 0] ""]
     }
     set p_prompt [find passprompt $router]
     if { "$p_prompt" == "" } {
-	set p_prompt "(\[Pp]assword|passwd):"
+	set p_prompt "(\[Pp]assword|passwd|Enter password for \[^ :]+):"
     } else {
 	set p_prompt [join [lindex $p_prompt 0] ""]
     }
@@ -433,6 +595,19 @@ foreach router [lrange $argv $i end] {
 	set e_prompt "\[Pp]assword:"
     } else {
 	set e_prompt [join [lindex $e_prompt 0] ""]
+    }
+
+    # Figure out identity file to use
+    set identfile [join [lindex [find identity $router] 0] ""]
+
+    # Figure out passphrase to use
+    if {[info exists avpassphrase]} {
+	set passphrase $avpassphrase
+    } else {
+	set passphrase [join [lindex [find passphrase $router] 0] ""]
+    }
+    if { ! [string length "$passphrase"]} {
+	set passphrase $passwd
     }
 
     # Figure out cypher type
@@ -459,10 +634,14 @@ foreach router [lrange $argv $i end] {
     if { $do_cloginrcdbg > 0 } { continue; }
 
     # Login to the router
-    if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype]} {
+    if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype $identfile]} {
 	incr exitval
-	# if login failed, move on to the next device
+	# if login failed or rsh was unsuccessful, move on to the next device
 	continue
+    }
+    # Figure out the prompt.
+    if { [regexp -- "(#| \\(enable\\))" $prompt_match junk] == 1 } {
+	set enable 0
     }
     if { $enable } {
 	if {[do_enable $enauser $enapasswd]} {
@@ -475,18 +654,18 @@ foreach router [lrange $argv $i end] {
     }
     # we are logged in, now figure out the full prompt
     send "\r"
+    regsub -all {^(\^*)(.*)} $prompt {\2} reprompt
     expect {
 	-re "\[\r\n]+"		{ exp_continue; }
-	-re "^.+$prompt"	{ set junk $expect_out(0,string);
-				  regsub -all "\[\]\[]" $junk {\\&} prompt;
+	-re "^.+$reprompt"	{ set junk $expect_out(0,string);
+				  regsub -all "\[\]\[\(\)+]" $junk {\\&} prompt;
 				}
     }
-
     if { $do_command || $do_script } {
-	send -h "terminal length 0\r"
-	expect -re $prompt	{}
-	send -h "no cli-paging\r"
-	expect -re $prompt	{}
+	send "terminal datadump\r"
+	expect -re $prompt  	{}
+	send "terminal width 132\r"
+	expect -re $prompt		{}
     }
     if { $do_command } {
 	if {[run_commands $prompt $command]} {

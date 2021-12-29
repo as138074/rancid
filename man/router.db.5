@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "router.db" "5" "17 June 2016"
+.TH "router.db" "5" "14 December 2017"
 .SH NAME
 router.db \- rancid group configuration file
 .SH DESCRIPTION
@@ -86,7 +86,11 @@ A Ciena Waveserver.
 .ID 15n
 .B cisco
 A Cisco router, PIX, or switch such as the 3500XL or 6000 running IOS (or
-IOS-like) OS, but not IOS-XR.
+IOS-like) OS, but not IOS-XR, NX-OS or Cisco small business devices.
+.TP
+.ID 15n
+.B cisco-sb
+A Cisco small business devices.
 .TP
 .ID 15n
 .B cisco-nx
@@ -117,6 +121,10 @@ device type.
 .ID 15n
 .B erx
 A Juniper E-series edge router.
+.TP
+.ID 15n
+.B fss2
+A Fujitsu FSS2/1finity device.
 .TP
 .ID 15n
 .B dell
@@ -208,8 +216,8 @@ A SMC switch, which also account for some Dell OEMs.
 Including Dell PowerConnect 35xx (3524, 3524P, 3548, 3548P) and 7048.
 .TP
 .ID 15n
-.B ciscowlc
-A Cisco WLC.
+.B sros
+A Nokia (Alcatel-Lucent) router, such as the 7750 SR.
 .TP
 .ID 15n
 .B xirrus

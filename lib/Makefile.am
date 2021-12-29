@@ -8,9 +8,10 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 my_pkglibdir = $(pkglibdir)
 my_pkglib_DATA = rancid.pm acos.pm aeos.pm arbor.pm bigip.pm ciscowlc.pm \
-		 dell.pm edgemax.pm edgerouter.pm eos.pm exos.pm foundry.pm \
-		 ios.pm iosshtech.pm iosxr.pm junos.pm mrv.pm nxos.pm \
-		 panos.pm rbt.pm wavesvros.pm
+		 dell.pm edgemax.pm edgerouter.pm exos.pm foundry.pm \
+		 fss2.pm fxos.pm \
+		 ios.pm iossb.pm iosshtech.pm iosxr.pm junos.pm mrv.pm nxos.pm \
+		 panos.pm rbt.pm sros.pm vrp.pm wavesvros.pm
 pkglib_in = $(my_pkglib_DATA:%=%.in)
 
 RANLIB= :
@@ -62,10 +63,12 @@ ciscowlc.pm: ciscowlc.pm.in
 dell.pm: dell.pm.in
 edgemax.pm: edgemax.pm.in
 edgerouter.pm: edgerouter.pm.in
-eos.pm: eos.pm.in
 exos.pm: exos.pm.in
 foundry.pm: foundry.pm.in
+fss2.pm: fss2.pm.in
+fxos.pm: fxos.pm.in
 ios.pm: ios.pm.in
+iossb.pm: iossb.pm.in
 iosshtech.pm: iosshtech.pm.in
 iosxr.pm: iosxr.pm.in
 junos.pm: junos.pm.in
@@ -74,5 +77,6 @@ mrv.pm: mrv.pm.in
 nxos.pm: nxos.pm.in
 panos.pm: panos.pm.in
 rbt.pm: rbt.pm.in
-timos.pm: timos.pm.in
+sros.pm: sros.pm.in
+vrp.pm: vrp.pm.in
 wavesvros.pm: wavesvros.pm.in

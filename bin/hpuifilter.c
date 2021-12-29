@@ -1,11 +1,14 @@
 /*
- * $Id: hpuifilter.c 3428 2016-07-20 09:47:52Z heas $
+ * $Id: hpuifilter.c 3763 2018-02-02 19:38:21Z heas $
  *
- * Copyright (c) 1997-2016 by Terrapin Communications, Inc.
+ * Copyright (c) 1997-2018 by Henry Kilmer and John Heasley
+ * All rights reserved.
+ *
+ * Copyright (c) 1997-2018 by Henry Kilmer and John Heasley
  * All rights reserved.
  *
  * This code is derived from software contributed to and maintained by
- * Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+ * Henry Kilmer, John Heasley, Andrew Partan,
  * Pete Whiting, Austin Schutz, and Andrew Fort.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,17 +19,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Terrapin Communications,
- *        Inc. and its contributors for RANCID.
- * 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+ * 3. Neither the name of RANCID nor the names of its
  *    contributors may be used to endorse or promote products derived from
  *    this software without specific prior written permission.
- * 5. It is requested that non-binding fixes and modifications be contributed
- *    back to Terrapin Communications, Inc.
  *
- * THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY Henry Kilmer, John Heasley AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
@@ -38,6 +35,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
+ * It is the request of the authors, but not a condition of license, that
+ * parties packaging or redistributing RANCID NOT distribute altered versions
+ * of the etc/rancid.types.base file nor alter how this file is processed nor
+ * when in relation to etc/rancid.types.conf.  The goal of this is to help
+ * suppress our support costs.  If it becomes a problem, this could become a
+ * condition of license.
  *
  * Modified openpty() from NetBSD:
  * Copyright (c) 1990, 1993, 1994
@@ -507,7 +510,7 @@ main(int argc, char **argv, char **ev)
 
 /*
  * return zero if the escape sequence beginning with buf appears to be
- * incomplete (and the caller should wait for more data); or else returns
+ * incomplete (and the caller should wait for more data); else return
  * the index of the first character past the end of the sequence.
  */
 int
@@ -521,7 +524,7 @@ complete_esc(char *buf, int len)
 	/* look for a char that ends the sequence */
 	for (i = 2; i < len; i++) {
 	    if (isalpha((int)buf[i]))
-		return(i + 10);
+		return(i + 1);
 	}
 	return(0);
     }
@@ -545,8 +548,8 @@ int
 filter(char *buf, int len)
 {
     static regmatch_t	pmatch[1];
-#define	N_REG		16		/* number of regexes in reg[][] */
-#define	N_CRs		2		/* number of CR replacements */
+#define	N_REG		19		/* number of regexes in reg[][] */
+#define	N_CRs		5		/* number of CR replacements */
     static regex_t	preg[N_REG];
     static char		reg[N_REG][50] = {	/* vt100/220 escape codes */
 				"\x1B""7\x1B\\[1;24r\x1B""8",	/* ds */
@@ -570,6 +573,9 @@ filter(char *buf, int len)
 				/* replace these with CR */
 				"\x1B\\[0m",			/* me */
 				"\x1B""E",
+				"\x1B\\[\\?7h",			/* autowrap */
+				"\x1B\\[1L",			/* insert line*/
+				"\x1B\\[1M",			/* md */
 			};
     char		bufstr[3] = {ESC, '\x07', '\0'},
 			ebuf[256];

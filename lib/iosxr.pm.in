@@ -1,6 +1,6 @@
 package iosxr;
 ##
-## $Id: iosxr.pm.in 3463 2016-09-12 23:04:42Z heas $
+## $Id: iosxr.pm.in 3841 2018-07-18 16:22:59Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -445,6 +445,8 @@ sub ShowInstallActive {
 	return(1) if (/(Invalid (input|command) detected|Type help or )/i);
 	return(1) if (/^(-+\^|syntax error: unknown argument)$/i);	# NCS
 	return(-1) if (/command authorization failed/i);
+	return(-1) if (/install director is not up or ready/i);# temp error
+	return(-1) if (/failed to output install information /i);# temp error
 
 	# FPD upgrade in progress on some hardware, reload/configuration change
 	# on those is not recommended as it might cause HW programming failure
@@ -530,6 +532,7 @@ sub DirSlotN {
 	return(1) if (/^(-+\^|syntax error: unknown argument)$/i);	# NCS
 	return(1) if (/(No such device|Error Sending Request)/i);
 	return(1) if (/: path doesnot exists/i);	# NCS
+	return(1) if (/: Path does not exist/i);	# NCS
 	return(1) if (/\%Error: No such file or directory/);
 	return(1) if (/\%Error: No route to host/);
 	return(1) if (/No space information available/);
@@ -541,10 +544,21 @@ sub DirSlotN {
 	return(-1) if (/\%Error opening \S+:\S+ \(Device or resource busy\)/i);
 	return(-1) if (/command authorization failed/i);
 	return(1) if (/(Open device \S+ failed|Error opening \S+:)/);
+
+	# Filter dhcp database
+	if (/dhcp_[^. ]*\.txt/) {
+	    next;
+	}
+	# Filter debugging file dlbg.txt & dlbg.txt-1 only on ASR9k w/ XR
+	if ($proc =~ /ASR9K/ && /dlbg\.txt/) {
+	    next;
+	}
 	# filter frequently changing files from IOX bootflash, hardiska,
 	# and nvram
 	if ($dev =~ /(bootflash|disk0|harddisk|nvram)/) {
-	    if (/\s(aaa|ce_switch.log|errmsg_cont|genstr_cont|temp_cont|temp_static_data|uptime_cont|volt_cont)\s*$/) {
+	    if (/\s(\.python-history|aaa|\.bash_history|ce_switch.log)\s*$/ ||
+	        /\s(cisco_support|errmsg_cont|genstr_cont|temp_cont)\s*$/ ||
+	        /\s(temp_cont|temp_static_data|uptime_cont|volt_cont)\s*$/) {
 		# change
 		# 57          -rw-  23100       <no date>              volt_cont
 		# 614788      drwx  4096        Fri Aug 20 12:06:25 2010  temp_cont
@@ -556,6 +570,14 @@ sub DirSlotN {
 		    my($szl) = length($sz);
 		    my($fmt) = "%s%-". $szl ."s%s%s%s";
 		    $_ = sprintf($fmt, $a, "", $c, $dt, $rem);
+		} elsif (/(\s*\d+)(\s+\S+\s+\d+\s+)(\d+\s+\w+\s+\d+\s+\d+:\d+)/) {
+		    # XR >= 6.3; dir disk0:, but harddisk: is diff format.  wtf
+		    # drop fileno size, & date.
+		    # " 8002 drwxr-xr-x 2 4096 Jan 17 15:27 np"
+		    my($fn, $perm, $dt, $rem) = ($1, $2, $3, $');
+		    my($fnl, $dtl) = (length($fn), length($dt));
+		    my($fmt) = "%-". $fnl ."s%s%-". $dtl ."s%s";
+		    $_ = sprintf($fmt, "", $perm, "", $rem);
 		} elsif (/(\s*\d+\s+\S+\s+)(\d+)(\s+)(\w+ \w+\s+\d+ \d+:\d+:\d+ \d+)/) {
 		    my($a, $sz, $c, $dt, $rem) = ($1, $2, $3, $4, $');
 		    my($szl, $dtl) = (length($sz), length($dt));
@@ -564,29 +586,13 @@ sub DirSlotN {
 		}
 	    }
 	}
-	# Filter dhcp database
-	if (/dhcp_[^. ]*\.txt/) {
+
+	# XR: 822083584 bytes total (821081600 bytes free)
+	# eXR: 990484 kbytes total (813208 kbytes free)
+	if (/^\s*(\d+ k?bytes) total\s+\((\d+ k?bytes) free\)/i) {
+	    ProcessHistory("FLASH","","","!Flash: $dev: " .
+			   diskszsummary($1, $2) . "\n");
 	    next;
-	}
-	# Filter debugging file dlbg.txt & dlbg.txt-1 only on ASR9k w/ XR
-	if ($proc =~ /ASR9K/ && /dlbg\.txt/) {
-	    next;
-	}
-	if (/.*\((\d+) (k?bytes) free\)/) {
- 	    my($tmp) = $1;
- 	    my($sz) = $2;
-	    $tmp *= 1024 if ($sz eq "kbytes");	# NCS summarizes in kbytes
-	
-	    if ($tmp >= (1024 * 1024 * 1024)) {
-		$tmp = int($tmp / (1024 * 1024 * 1024));
-		s/$1 $sz free/$tmp GB free/;
-	    } elsif ($tmp >= (1024 * 1024)) {
-		$tmp = int($tmp / (1024 * 1024));
-		s/$1 $sz free/$tmp MB free/;
-	    } else {
-		$tmp = int($tmp / 1024);
-		s/$1 $sz free/$tmp KB free/;
-	    }
 	}
 
 	ProcessHistory("FLASH","","","!Flash: $dev: $_");
@@ -742,6 +748,7 @@ sub ShowInstallSummary {
 	return(-1) if (/command authorization failed/i);
 	return(-1) if (/inventory summary cannot be output/i);	# temp error
 	return(-1) if (/currently affected by install operation/i);# temp error
+	return(-1) if (/install director is not up or ready/i);# temp error
 
 	# skip blank lines
 	next if (/^\s*$/);

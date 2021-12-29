@@ -1,6 +1,6 @@
 package edgemax;
 ##
-## $Id: edgemax.pm.in 3376 2016-04-06 17:52:30Z heas $
+## $Id: edgemax.pm.in 3795 2018-04-10 20:48:10Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -97,26 +97,6 @@ sub ShowVersion {
 	ProcessHistory("VERSION","","","!$_");
     }
     ProcessHistory("VERSION","","","!\n");
-    return(0);
-}
-
-# This routine parses "Dir"
-sub DirSlotN {
-    my($INPUT, $OUTPUT) = @_;
-    my($slot);
-
-    print STDERR "    In DirSlotN: $_" if ($debug);
-
-    while (<$INPUT>) {
-	tr/\015//d;
-	last if (/^$prompt/);
-	next if (/^\s+\^$/);
-        return(1) if (/invalid (input|command) detected/i);
-	next if /^\s*$/;
-
-	ProcessHistory("FLASH","","","!$_");
-    }
-    ProcessHistory("FLASH","","","!\n");
     return(0);
 }
 

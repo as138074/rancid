@@ -1,5 +1,5 @@
 # comments are cool, as is whitespace
-# clogin supports a number of add directives:
+# clogin supports a number of add directives (non-exhaustive):
 #	password
 #	user
 #	userprompt
@@ -16,6 +16,7 @@
 # Details on each of these follows.  Also see cloginrc(5).
 #
 # add password <router name glob> <vty passwd> <enable passwd>
+#	Special characters must be escaped.  See cloginrc(5).
 #
 # add user <router name glob> <username>
 #	The default user is $USER (i.e.: the user running clogin).
@@ -64,7 +65,10 @@
 #	include a secondary .cloginrc file
 #
 #
-# Note: The first match for a hostname takes precedence.
+# Note: The first match for a hostname takes precedence.  The -[Mm] options
+#	are useful for debugging cloginrc issues.
+#
+# Also see cloginrc(5) and clogin(1).
 
 #add password sl-bb*-dc	cow24
 #add password sl-gw*-dc	geeks

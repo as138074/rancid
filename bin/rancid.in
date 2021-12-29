@@ -1,6 +1,6 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 3505 2016-11-20 04:45:26Z heas $
+## $Id: rancid.in 3613 2017-02-22 21:37:22Z heas $
 ##
 ## @PACKAGE@ @VERSION@
 @copyright@
@@ -123,6 +123,10 @@ if (scalar(%commands) || !$clean_run || !$found_end) {
     }
     if (!$clean_run || !$found_end) {
 	print(STDERR "$host: End of run not found\n");
+	if ($debug) {
+	    print(STDERR "$host: clean_run is false\n") if (!$clean_run);
+	    print(STDERR "$host: found_end is false\n") if (!$found_end);
+	}
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

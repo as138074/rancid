@@ -88,9 +88,10 @@ brocade;login;brlogin
 #XXX brocade;command;XXX::DomainsShow;domainsShow
 #XXX brocade;command;XXX::ConfigShow;configShow
 #
-# Ciena Waveserver (XXX WiP)
+# Ciena Waveserver
 ciena-ws;script;rancid -t ciena-ws
 ciena-ws;login;hlogin
+ciena-ws;timeout;120
 ciena-ws;module;wavesvros
 ciena-ws;inloop;wavesvros::inloop
 ciena-ws;command;wavesvros::ShowVersion;software show
@@ -123,6 +124,38 @@ cisco;command;ios::ShowLicense;show license
 cisco;command;ios::ShowLicense;show license summary
 cisco;command;ios::ShowActivationKey;show activation-key;ASA/PIX
 cisco;command;ios::ShowFlash;show flash:
+cisco;command;ios::DirSlotN;dir /all nvram:
+cisco;command;ios::DirSlotN;dir /all bootflash:
+cisco;command;ios::DirSlotN;dir /all slot0:
+cisco;command;ios::DirSlotN;dir /all disk0:
+cisco;command;ios::DirSlotN;dir /all slot1:
+cisco;command;ios::DirSlotN;dir /all disk1:
+cisco;command;ios::DirSlotN;dir /all slot2:
+cisco;command;ios::DirSlotN;dir /all disk2:
+cisco;command;ios::DirSlotN;dir /all harddisk:
+cisco;command;ios::DirSlotN;dir /all harddiska:
+cisco;command;ios::DirSlotN;dir /all harddiskb:
+cisco;command;ios::DirSlotN;dir /all sup-bootdisk:;c6500 sup32
+cisco;command;ios::DirSlotN;dir /all sup-bootflash:;c6500 ios
+cisco;command;ios::DirSlotN;dir /all sup-microcode:;c6500 ios
+cisco;command;ios::DirSlotN;dir /all slavenvram:
+cisco;command;ios::DirSlotN;dir /all slavebootflash:
+cisco;command;ios::DirSlotN;dir /all slaveslot0:
+cisco;command;ios::DirSlotN;dir /all slavedisk0:
+cisco;command;ios::DirSlotN;dir /all slaveslot1:
+cisco;command;ios::DirSlotN;dir /all slavedisk1:
+cisco;command;ios::DirSlotN;dir /all slaveslot2:
+cisco;command;ios::DirSlotN;dir /all slavedisk2:
+cisco;command;ios::DirSlotN;dir /all slavesup-bootflash:;c7600
+cisco;command;ios::DirSlotN;dir /all sec-nvram:
+cisco;command;ios::DirSlotN;dir /all sec-bootflash:
+cisco;command;ios::DirSlotN;dir /all sec-slot0:
+cisco;command;ios::DirSlotN;dir /all sec-disk0:
+cisco;command;ios::DirSlotN;dir /all sec-slot1:
+cisco;command;ios::DirSlotN;dir /all sec-disk1:
+cisco;command;ios::DirSlotN;dir /all sec-slot2:
+cisco;command;ios::DirSlotN;dir /all sec-disk2:
+cisco;command;ios::ShowContAll;show controllers
 cisco;command;ios::ShowContCbus;show controllers cbus
 cisco;command;ios::ShowDiagbus;show diagbus
 cisco;command;ios::ShowDiag;show diag
@@ -132,6 +165,7 @@ cisco;command;ios::ShowSpeVersion;show spe version
 cisco;command;ios::ShowC7200;show c7200
 cisco;command;ios::ShowCellular;show cellular 0 profile;Cellular modem
 cisco;command;ios::ShowInventory;show inventory raw
+cisco;command;ios::ShowInventory;show inventory;ASA/PIX
 cisco;command;ios::ShowVTP;show vtp status
 cisco;command;ios::ShowVLAN;show vlan
 cisco;command;ios::ShowVLAN;show vlan-switch
@@ -140,8 +174,6 @@ cisco;command;ios::ShowSDM;show sdm prefer
 cisco;command;ios::ShowMTU;show system mtu
 cisco;command;ios::ShowDebug;show debug
 cisco;command;ios::ShowShun;show shun;ASA/PIX
-cisco;command;ios::ShowINT;show int status
-cisco;command;ios::ShowInDesc;show int desc
 cisco;command;ios::WriteTerm;more system:running-config;ASA/PIX
 cisco;command;ios::WriteTerm;show running-config view full;workaround for role-based CLI
 cisco;command;ios::WriteTerm;show running-config
@@ -164,11 +196,19 @@ cisco-nx;command;nxos::ShowEnv;show environment fex all fan
 cisco-nx;command;nxos::ShowEnvTemp;show environment temperature
 cisco-nx;command;nxos::ShowEnvPower;show environment power
 cisco-nx;command;nxos::ShowBoot;show boot
+cisco-nx;command;nxos::DirSlotN;dir bootflash:
+cisco-nx;command;nxos::DirSlotN;dir debug:
+cisco-nx;command;nxos::DirSlotN;dir logflash:
+cisco-nx;command;nxos::DirSlotN;dir slot0:
+cisco-nx;command;nxos::DirSlotN;dir usb1:
+cisco-nx;command;nxos::DirSlotN;dir usb2:
+cisco-nx;command;nxos::DirSlotN;dir volatile:
 cisco-nx;command;nxos::ShowModule;show module
 cisco-nx;command;nxos::ShowModule;show module xbar
 #cisco-nx;command;nxos::ShowModule;show module X;add, but wait for show all
 #cisco-nx;command;nxos::ShowModule;show module X epld;add, but wait for show all
 cisco-nx;command;nxos::ShowInventory;show inventory
+cisco-nx;command;nxos::ShowIntTransceiver;show interface transceiver
 cisco-nx;command;nxos::ShowVTP;show vtp status;drop?
 cisco-nx;command;nxos::ShowVLAN;show vlan
 cisco-nx;command;nxos::ShowDebug;show debug
@@ -177,6 +217,16 @@ cisco-nx;command;nxos::ShowProcLog;show processes log vdc-all
 cisco-nx;command;nxos::ShowFex;show module fex
 cisco-nx;command;nxos::ShowFex;show fex
 cisco-nx;command;nxos::WriteTerm;show running-config
+#
+# Cisco small business devices.  These are peculiar; most likely this will not
+# work with all of them.
+cisco-sb;script;rancid -t cisco-sb
+cisco-sb;login;csblogin
+cisco-sb;module;iossb
+cisco-sb;inloop;iossb::inloop
+cisco-sb;command;iossb::ShowVersion;show version
+cisco-sb;command;iossb::ShowSystem;show system
+cisco-sb;command;iossb::WriteTerm;show running-config
 #
 cisco-xr;script;rancid -t cisco-xr
 cisco-xr;login;clogin
@@ -193,6 +243,21 @@ cisco-xr;command;iosxr::ShowHWfpd;admin show hw-module fpd location all;XR LC im
 cisco-xr;command;iosxr::ShowRedundancy;show redundancy secondary
 cisco-xr;command;iosxr::ShowInstallActive;show install active
 cisco-xr;command;iosxr::ShowEnv;admin show env all
+cisco-xr;command;iosxr::DirSlotN;dir /all nvram:
+cisco-xr;command;iosxr::DirSlotN;dir /all bootflash:
+cisco-xr;command;iosxr::DirSlotN;dir /all compactflash:
+cisco-xr;command;iosxr::DirSlotN;dir /all compactflasha:
+cisco-xr;command;iosxr::DirSlotN;dir /all slot0:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk0:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk0a:
+cisco-xr;command;iosxr::DirSlotN;dir /all slot1:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk1:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk1a:
+cisco-xr;command;iosxr::DirSlotN;dir /all slot2:
+cisco-xr;command;iosxr::DirSlotN;dir /all disk2:
+cisco-xr;command;iosxr::DirSlotN;dir /all harddisk:
+cisco-xr;command;iosxr::DirSlotN;dir /all harddiska:
+cisco-xr;command;iosxr::DirSlotN;dir /all harddiskb:
 cisco-xr;command;iosxr::ShowContAll;show controllers
 cisco-xr;command;iosxr::AdminShowDiag;admin show diag
 cisco-xr;command;iosxr::ShowInventory;admin show inventory raw
@@ -218,25 +283,24 @@ cisco-wlc5;command;ciscowlc::ShowUdi;show udi
 cisco-wlc5;command;ciscowlc::ShowSysinfo;show sysinfo
 cisco-wlc5;command;ciscowlc::ShowConfig;show run-config commands
 #
-compass;script;rancid -t compass
-compass;login;complogin
-compass;module;eos
-compass;inloop;eos::inloop
-compass;command;eos::ShowVersion;show version
-compass;command;eos::ShowAlerts;show system alerts
-compass;command;eos::ShowVersion;show system build-parameters
-compass;command;eos::ShowSoftware;show system software images
-compass;command;eos::ShowSoftware;show system software packages
-compass;command;eos::ShowModule;show system module 
-compass;command;eos::ShowInventory;show system hardware
-compass;command;eos::ShowConfig;show configuration detail 
+cisco-wlc8;script;rancid -t cisco-wlc8
+cisco-wlc8;login;wlogin
+cisco-wlc8;timeout;120
+cisco-wlc8;module;ciscowlc
+cisco-wlc8;inloop;ciscowlc::inloop
+cisco-wlc8;command;ciscowlc::ShowUdi;show udi
+cisco-wlc8;command;ciscowlc::ShowSysinfo;show sysinfo
+cisco-wlc8;command;ciscowlc::ShowConfig;show run-config commands
 #
 css;script;cssrancid
 css;login;clogin
 #
 # Dell DES-3010F, DES-3052P, DES-3526, DES-3550
+# Some of these devices are remarkably slow to read config, so the timeout is
+# rather long.
 dell;script;rancid -t dell
 dell;login;dllogin
+dell;timeout;300
 dell;module;dell
 dell;inloop;dell::inloop
 dell;command;dell::GetSystem;show switch
@@ -252,7 +316,6 @@ edgemax;command;edgemax::ShowHardware;show hardware
 edgemax;command;edgemax::ShowBootvar;show bootvar
 edgemax;command;edgemax::ShowEnvironment;show environment
 edgemax;command;edgemax::ShowDebug;show debug
-edgemax;command;edgemax::DirSlotN;dir
 edgemax;command;edgemax::WriteTerm;show running-config
 #
 # UBNT EdgeRouter
@@ -305,6 +368,7 @@ ezt3;login;elogin
 # f5 big-ip <=v10
 f5;script;f5rancid
 f5;login;clogin
+#
 # f5 big-ip v11
 bigip;script;rancid -t bigip
 bigip;login;clogin
@@ -318,6 +382,18 @@ bigip;command;bigip::ShowZebOSsockets;lsof -i :179
 bigip;command;bigip::ShowRouteStatic;tmsh show /net route static
 bigip;command;bigip::WriteTerm;tmsh -q list
 #
+# f5 big-ip v13
+bigip13;script;rancid -t bigip13
+bigip13;login;clogin
+bigip13;module;bigip
+bigip13;inloop;bigip::inloop
+bigip13;command;rancid::RunCommand;modify cli preference pager disabled display-threshold 0
+bigip13;command;bigip::ShowVersion;show sys version
+bigip13;command;bigip::ShowHardware;show sys hardware
+bigip13;command;bigip::ShowLicense;show sys license 
+bigip13;command;bigip::ShowRouteStatic;show /net route static
+bigip13;command;bigip::WriteTerm;list all-properties recursive
+#
 # Force 10 and Dell Force10.
 force10;script;f10rancid
 force10;login;clogin
@@ -325,7 +401,26 @@ force10;login;clogin
 fortigate;script;fnrancid
 fortigate;login;fnlogin
 #
-# Foundry and HP procurve OEMs of Foundry (Brocade ICX-6450s, HP9304M)
+# Foundry and HP procurve OEMs of Foundry (Brocade ICX-6450s, HP9304M).
+# Reportedly functional on:
+# J4899[BC] 2650,
+# J4899C 2650,
+# J4900[AB] 2626,
+# J4903A 2824,
+# J9019A 2510-24,
+# J9019B 2510B-24,
+# J9020A 2510-48,
+# J9021A 2810-24G,
+# J9022A 2810-48G,
+# J9145A 2910al-24G,
+# J9279A 2510G-24,
+# J9280A 2510G-48,
+# J9772A 2530-48G-PoEP,
+# J9775A 2530-48G,
+# J9778A 2530-48-PoEP,
+# J9779A 2530-24-PoEP,
+# J9780A 2530-8-PoEP
+# 29[12]0
 foundry;script;rancid -t foundry
 foundry;login;flogin
 foundry;module;foundry
@@ -339,6 +434,41 @@ foundry;command;foundry::ShowFlash;show flash
 foundry;command;foundry::WriteTerm;write term
 foundry;command;foundry::WriteTerm;show running-config
 #
+# Fujitsu T100 FSS2/1finity
+fss2;script;rancid -t fss2
+fss2;login;jlogin
+fss2;module;fss2
+fss2;inloop;fss2::inloop
+fss2;command;rancid::RunCommand;set complete-on-space false
+fss2;command;rancid::RunCommand;set screen width 132
+fss2;command;rancid::RunCommand;set paginate false 
+fss2;command;fss2::ShowSystem;show system
+fss2;command;fss2::ShowInventory;show inventory 
+fss2;command;fss2::ShowFWinfo;show fw-info 
+fss2;command;fss2::WriteTerm;show configuration
+#
+# Cisco FirePower / FX-OS
+fxos;script;rancid -t fxos
+fxos;login;fxlogin
+fxos;module;fxos
+fxos;inloop;fxos::inloop
+fxos;command;fxos::ShowModel;show model
+fxos;command;fxos::ShowInventory;show inventory
+fxos;command;fxos::DirSlotN;dir /all
+fxos;command;fxos::ShowMode;show mode
+fxos;command;fxos::ShowManagers;show managers
+fxos;command;fxos::ShowNetwork;show network
+fxos;command;fxos::ShowNetwork;show network-static-routes
+fxos;command;fxos::ShowNetwork;show network-dhcp-server
+fxos;command;fxos::WriteTermFTD;show running-config
+fxos;command;fxos::RunCommand;connect fxos; prompt changes
+fxos;command;fxos::RunCommand;term len 0
+fxos;command;fxos::ShowFirmware;show system firmware detail
+fxos;command;fxos::ShowChassis;show chassis detail
+fxos;command;fxos::ShowChassis;show chassis inventory detail
+fxos;command;fxos::ShowChassis;show chassis environment expand detail
+fxos;command;fxos::WriteTerm;show configuration
+#
 hitachi;script;htrancid
 hitachi;login;htlogin
 #
@@ -349,6 +479,7 @@ hp;login;hlogin
 #
 juniper;script;rancid -t juniper
 juniper;login;jlogin
+juniper;timeout;120
 juniper;module;junos
 juniper;inloop;junos::inloop
 juniper;command;junos::ShowChassisClocks;show chassis clocks
@@ -367,7 +498,7 @@ juniper;command;junos::ShowChassisSCB;show chassis cfeb
 juniper;command;junos::ShowChassisAlarms;show chassis alarms
 juniper;command;junos::ShowSystemLicense;show system license
 juniper;command;junos::ShowSystemBootMessages;show system boot-messages
-#juniper;command;junos::ShowSystemCoreDumps;show system core-dumps
+juniper;command;junos::ShowSystemCoreDumps;show system core-dumps
 juniper;command;junos::ShowVersion;show version detail
 juniper;command;junos::ShowVersion;show version invoke-on other-routing-engine
 juniper;command;junos::ShowConfiguration;show configuration
@@ -435,6 +566,7 @@ mrv;inloop;mrv::inloop
 mrv;command;mrv::ShowVersion;show version
 mrv;command;mrv::ShowChassis;show chassis
 mrv;command;mrv::ShowSlots;show slots
+mrv;command;mrv::ShowInventory;show inventory
 mrv;command;mrv::WriteTerm;show running-config
 #
 netopia;script;trancid
@@ -475,9 +607,63 @@ riverbed;command;rbt::WriteTerm;show configuration
 riverstone;script;rivrancid
 riverstone;login;rivlogin
 #
-# SMC and Dell PowerConnect 35xx (3524, 3524P, 3548, 3548P) and 7048
+# SMC and Dell PowerConnect N2048, 35xx (3524, 3524P, 3548, 3548P), N4032F,
+# N4064, M6348, 64xx (6428), 7048, M8024(-k), and R1-2401.
 smc;script;srancid
 smc;login;hlogin
+#
+# Nokia (Alcatel-Lucent) SR OS Classic CLI (TiMOS)
+# 7210 SAS, 7250 IXR, 7450 ESS, 7705 SAR, 7750 SR, 7950 XRS, CMG and VSR routers
+sros;script;rancid -t sros
+sros;login;noklogin
+sros;module;sros
+sros;inloop;sros::inloop
+sros;command;sros::ShowSystemInfo;show system information
+sros;command;sros::BootLog;file type bootlog.txt
+sros;command;sros::ShowRedundancy;show redundancy synchronization
+sros;command;sros::ShowChassis;show chassis
+sros;command;sros::ShowChassisEnv;show chassis environment
+sros;command;sros::ShowChassisPS;show chassis power-supply
+sros;command;sros::ShowChassisPM;show chassis power-management
+sros;command;sros::ShowCardState;show card state
+sros;command;sros::ShowCardDetail;show card detail
+sros;command;sros::ShowDebug;show debug
+sros;command;sros::ShowBOF;show bof
+sros;command;sros::WriteTermIndex;admin display-config index
+sros;command;sros::WriteTerm;admin display-config
+#
+# Nokia (Alcatel-Lucent) SR OS MD-CLI (TiMOS)
+# 7750 SR and 7950 XRS routers
+sros-md;script;rancid -t sros-md
+sros-md;login;noklogin
+sros-md;module;sros
+sros-md;inloop;sros::inloop
+sros-md;command;sros::ShowSystemInfo;show system information
+sros-md;command;sros::BootLog;//file type bootlog.txt
+sros-md;command;sros::ShowRedundancy;show redundancy synchronization
+sros-md;command;sros::ShowChassis;show chassis
+sros-md;command;sros::ShowChassisEnv;show chassis environment
+sros-md;command;sros::ShowChassisPS;show chassis power-supply
+sros-md;command;sros::ShowChassisPM;show chassis power-management
+sros-md;command;sros::ShowCardState;show card state
+sros-md;command;sros::ShowCardDetail;show card detail
+sros-md;command;sros::ShowDebug;//show debug
+sros-md;command;sros::ShowBOF;//show bof
+sros-md;command;sros::WriteTermMD;admin show configuration
+#
+# Hauwei VRP (S5720)
+vrp;script;rancid -t vrp
+vrp;login;xilogin
+vrp;module;vrp
+vrp;inloop;vrp::inloop
+vrp;command;vrp::DispVersion;display version
+vrp;command;vrp::DispStartup;display startup
+vrp;command;vrp::DispDevice;display device
+vrp;command;vrp::DispDeviceMfg;display device manufacture-info
+vrp;command;vrp::DispTransciever;display transceiver verbose
+vrp;command;vrp::DispDebug;display debugging
+vrp;command;vrp::DirSlotN;dir /all /all-filesystems
+vrp;command;vrp::WriteTerm;display current-configuration
 #
 xirrus;script;xirancid
 xirrus;login;xilogin
