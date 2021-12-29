@@ -1,7 +1,5 @@
 #! /bin/sh
 ##
-## $Id: rancid-run.in 3763 2018-02-02 19:38:21Z heas $
-##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Henry Kilmer and John Heasley
 ## All rights reserved.
@@ -167,7 +165,7 @@ do
 		exit 1
 	    fi
 	    @PERLV@ -e "\$t = (stat(\"$LOCKFILE\"))[9]; print \"OLD\\n\" if (time() - \$t >= $LOCKTIME*60*60);" > $GRPOLDFILE
-	    if [ -s $TMPDIR/.$GROUP.old ]
+	    if [ -s $GRPOLDFILE ]
 	    then
 		(
 		  echo "To: @ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"

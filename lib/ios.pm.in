@@ -1,7 +1,5 @@
 package ios;
 ##
-## $Id: ios.pm.in 3952 2019-01-23 02:14:45Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -306,17 +304,17 @@ LINE:		while (<$INPUT>) {
 		$type = "1900";
 	    } elsif ($proc =~ /2811/) {
 		$type = "2800";
-            } elsif ( $proc =~ /^ME-3400/) {
+            } elsif ($proc =~ /^ME-3400/) {
                 $type = "ME3400";
-            } elsif ( $proc =~ /^ME-C37/) {
+            } elsif ($proc =~ /^ME-C37/) {
                 $type = "ME3700";
-            } elsif ( $proc =~ /^ME-C65/) {
+            } elsif ($proc =~ /^ME-C65/) {
                 $type = "ME6500";
 	    } elsif ($proc =~ /C3750/) {
 		$type = "3750";
 	    } elsif ($proc =~ /^(AS)?25[12][12]/) {
 		$type = "2500";
-	    } elsif ($proc =~ /261[01]/ || $proc =~ /262[01]/ ) {
+	    } elsif ($proc =~ /261[01]/ || $proc =~ /262[01]/) {
 		$type = "2600";
 	    } elsif ($proc =~ /WS-C29/) {
 		$type = "2900XL";
@@ -328,23 +326,23 @@ LINE:		while (<$INPUT>) {
 		$type = "3600";
 	    } elsif ($proc =~ /^37/) {
 		$type = "3700";
-            } elsif ( $proc =~ /WS-C375/) {
+            } elsif ($proc =~ /WS-C375/) {
                 $type = "3750";
 	    } elsif ($proc =~ /^38/) {
 		$type = "3800";
 	    } elsif ($proc =~ /WS-C45/) {
 		$type = "4500";
-	    } elsif ( $proc =~ /^AS5300/) {
+	    } elsif ($proc =~ /^AS5300/) {
 		$type = "AS5300";
-	    } elsif ( $proc =~ /^AS5350/) {
+	    } elsif ($proc =~ /^AS5350/) {
 		$type = "AS5350";
-	    } elsif ( $proc =~ /^AS5400/) {
+	    } elsif ($proc =~ /^AS5400/) {
 		$type = "AS5400";
 	    } elsif ($proc =~ /6000/) {
 		$type = "6000";
 	    } elsif ($proc eq "WK-C65") {
 		$type = "6500";
-            } elsif ( $proc =~ /WS-C6509/) {
+            } elsif ($proc =~ /WS-C6509/) {
                 $type = "6500";
 	    } elsif ($proc eq "RP") {
 		$type = "7000";
@@ -352,7 +350,7 @@ LINE:		while (<$INPUT>) {
 		$type = "7000";
 	    } elsif ($proc =~ /720[246]/) {
 		$type = "7200";
-	    } elsif ( $proc =~ /^73/) {
+	    } elsif ($proc =~ /^73/) {
 		$type = "7300";
 	    } elsif ($proc eq "RSP7000") {
 		$type = "7500";
@@ -368,7 +366,7 @@ LINE:		while (<$INPUT>) {
 		$type = "12000";
 	    } elsif ($proc =~ /1240[48]\/(GRP|PRP)/ || $proc =~ /1241[06]\/(GRP|PRP)/) {
 		$type = "12400";
-	    } elsif ($proc =~ /AIR-L?AP1[12][1234][[1234]/ ) {
+	    } elsif ($proc =~ /AIR-L?AP1[12][1234][[1234]/) {
 		$type="Aironet";
 	    } else {
 		$type = $proc;
@@ -496,7 +494,7 @@ OUT:ProcessHistory("COMMENTS","keysort","LICENSE","!\n");
     return(0);
 }
 
-# This routine parses "showCellular"
+# This routine parses "show cellular 0 profile"
 sub ShowCellular {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowCellular: $_" if ($debug);
@@ -519,7 +517,7 @@ sub ShowCellular {
     return(0);
 }
 
-# This routine parses "showDetail"
+# This routine parses "show switch detail"
 sub ShowDetail {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowDetail: $_" if ($debug);
@@ -561,6 +559,24 @@ sub ShowLicense {
 	next if (/(period used:|requested time:)/i);		# show lic feature
 	if (/(^\s*(evaluation )?period (left|remaining):\s*)\d+/i) {
 	    ProcessHistory("COMMENTS","keysort","LICENSE","! $1<limited>\n");
+	    next;
+	}
+
+	# drop license counts
+	next if (/license usage:/i);
+	if (/(.*)count status/i) {
+	    my($hdr) = $1;
+	    my($len) = length($hdr);
+
+	    $hdr =~ s/\s*$//;
+	    ProcessHistory("COMMENTS", "keysort", "LICENSE", "! $hdr\n");
+	    while (<$INPUT>) {
+		tr/\015//d;
+		return(0) if (/^$prompt/);
+
+		s/^(.{1,$len}).*/$1/;
+		ProcessHistory("COMMENTS", "keysort", "LICENSE", "! $_");
+	    }
 	    next;
 	}
 
@@ -809,6 +825,51 @@ sub ShowEnv {
     return(0);
 }
 
+# This routine parses "show hw-programmable all"
+sub ShowHWProgrammable {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowPlatform: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^\s+\^$/);
+	return(0) if (/% incomplete command/i); # every platform is different
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
+	return(-1) if (/command authorization failed/i);
+	# return(1) if ($type !~ /^12[40]/);
+	# the pager can not be disabled per-session on the PIX
+	if (/^(<-+ More -+>)/) {
+	    my($len) = length($1);
+	    s/^$1\s{$len}//;
+	}
+	/^$/ && next;
+
+	# XXX parsing for show platform, which has CPLD info on some platforms
+	#     but is inconsistent across platforms.
+	#if (/^(.*) insert time.*$/i) {
+	#    my($len) = length($1);
+	#    ProcessHistory("PLATFORM","","", "! $1\n");
+	#
+	#    while (<$INPUT>) {
+	#	tr/\015//d;
+	#	return(0) if (/^$prompt/);
+	#
+	#	s/^(.{1,$len}).*/$1/;
+	#	ProcessHistory("PLATFORM","","", "! $_");
+	#	last if (/^$/);
+	#    }
+	#    next;
+	#}
+
+	ProcessHistory("HWP","","", "! $_");
+    }
+    ProcessHistory("HWP","","", "!\n");
+
+    return(0);
+}
+
 # This routine parses "show rsp chassis-info" for the rsp
 # This will create arrays for hw info.
 sub ShowRSP {
@@ -955,12 +1016,15 @@ sub ShowFlash {
 	    next;
 
 	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog|snooping)/ ||
-		 /(smart-log\/agentlog|syslog)\s*$/) {
-	    # filter frequently changing files (dhcp & vlan database) from flash
+		 /(smart-log\/agentlog|syslog)\s*$/ ||
+		 /(log\/(?:ssp_tz\/)?[^. ]+\.log(?:\.[0-9]+\.gz)?)\s*$/) {
+	    # filter frequently changing files (dhcp & vlan database, logs) from flash
 	    # change from:
+	    # 537549598  38354       Feb 19 2019 20:59:32  log/ssp_tz/ssp_tz.log.1.gz
 	    # 9          660 Jan 15 2011 20:43:54 vlan.dat
 	    # 9          660 Jan 15 2011 20:43:54 +00:00 vlan.dat
 	    # to:
+	    #                                              log/ssp_tz/ssp_tz.log.1.gz
 	    #                                     vlan.dat
 	    #                                            vlan.dat
 	    if (/(\s*\d+)(\s+[-rwx]+\s+)(\d+)(\s+)(\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/) {
@@ -1025,7 +1089,7 @@ sub ShowFlash {
 		 /^(\s*\d+)(\s+[-rwx]+\s+\d+\s+\w+ \d+\s+\d+ \d+:\d+:\d+\s+)(\S+)/ ||
 		 /^(\s*\d+)(\s+\d+\s+\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+\s+)(\S+)/ ||
 		 /^(\s*\d+)(\s+\d+\s+\w+ \d+\s+\d+ \d+:\d+:\d+\s+)(\S+)/) {
-	    ProcessHistory("FLASH","keysort","$2","!Flash: $1$2$3\n") && next;
+	    ProcessHistory("FLASH","keysort","$3","!Flash: $1$2$3\n") && next;
         }
 
 	if (/(\d+) bytes (available|total) \((\d+) bytes (free|used)(\/\s+% free)?\)/) {
@@ -1173,9 +1237,11 @@ sub DirSlotN {
 	    #     3  -rw-             1011                    <no date>  ifIndex-table
 	    #    9  -rw-         660  Jan 15 2011 20:43:54 vlan.dat
 	    #   16  -rw-             5437  Jan 16 2016 02:22:32 +00:00  licenses
+	    #  114    -rwx  92           13:22:08 Aug 15 2019  .boot_string (ASA)
 	    if (/(\s*\d+\s+)(\S+\s+\d+\s+\w+ \d+\s+\d+ \d+:\d+:\d+ .\d+:\d+)/ ||
 	        /(\s*\d+\s+)(\S+\s+\d+\s+\w+ \d+\s+\d+ \d+:\d+:\d+)/ ||
-	        /(\s*\d+\s+)(\S+\s+\d+\s+<no date>\s+\S+)/) {
+	        /(\s*\d+\s+)(\S+\s+\d+\s+<no date>\s+\S+)/ ||
+	        /(\s*\d+\s+)(\S+\s+\d+\s+\d+:\d+:\d+ \w+ \d+\s+\d+\s+\S+)/) {
 		#my($fn, $a, $rem) = ($1, $2, $');
 		#my($fnl) = length($fn);
 		#my($fmt) = "%-". $fnl ."s%s%s\n";
@@ -1896,7 +1962,7 @@ sub ShowModule {
 	    $pa++;
 	}
     }
-    if ( $switch_n != 0 ) {
+    if ($switch_n != 0) {
 	ProcessHistory("Module","","","!\n");
     }
     foreach $slot (@lines) {
@@ -2014,6 +2080,40 @@ sub ShowCapture {
     ProcessHistory("CAPTURE","","","!\n") if ($capture_found == 1);
     return(0);
 }
+
+# This routine parses "show dot1x"
+sub ShowDot1x {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowVTP: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	return(1) if /^\s*\^\s*$/;
+	return(1) if (/Line has invalid autocommand /);
+	next if (/^\s+\^\s*$/);
+	return(1) if (/(invalid (input|command) detected|type help or )/i);
+	return(-1) if (/command authorization failed/i);
+	next if (/^Configuration last modified by/);
+	# the pager can not be disabled per-session on the PIX
+	if (/^(<-+ More -+>)/) {
+	    my($len) = length($1);
+	    s/^$1\s{$len}//;
+	}
+
+	# if dot1x is enabled, do not collect show vlan output
+	if (/^sysauthcontrol\s+(?:=\s+)?(\S+)/i) {
+	    if ($1 !~ /disabled/ && $filter_osc > 1) {
+		$DO_SHOW_VLAN = 1;
+	    }
+	}
+	ProcessHistory("COMMENTS","keysort","I0","!DOT1x: $_");
+    }
+    ProcessHistory("COMMENTS","keysort","I0","!\n");
+    return(0);
+}
+
 
 # This routine parses "show vtp status"
 sub ShowVTP {
@@ -2570,7 +2670,7 @@ TOP:
     # The ContentEngine lacks a definitive "end of config" marker.  If we
     # know that it is a CE, SAN, or NXOS and we have seen at least 5 lines
     # of write term output, we can be reasonably sure that we have the config.
-    if (($type eq "CE" || $type eq "SAN" || $type eq "NXOS" ) && $linecnt > 5) {
+    if (($type eq "CE" || $type eq "SAN" || $type eq "NXOS") && $linecnt > 5) {
 	$found_end = 1;
 	return(0);
     }

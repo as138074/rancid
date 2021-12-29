@@ -13,7 +13,7 @@ AC_INIT(m4_esyscmd(configure.vers package_name),
 	[rancid@shrubbery.net])
 AC_CONFIG_SRCDIR(CHANGES)
 AM_INIT_AUTOMAKE
-COPYYEARS="1997-2018"
+COPYYEARS="1997-2019"
 AC_SUBST(COPYYEARS)
 
 
@@ -309,6 +309,32 @@ if test $EXPECT_PATH = no; then
 fi
 AC_SUBST(EXPECT_PATH)
 
+dnl dnl locate python 3
+dnl AC_PROG_INSTALL
+dnl AC_PATH_PROG(PYTHON3_PATH,python3,no)
+dnl if test $PYTHON3_PATH = no; then
+dnl     unset ac_cv_path_PYTHON3_PATH
+dnl     AC_PATH_PROG(PYTHON3_PATH,python,no)
+dnl     if test $PYTHON3_PATH = no; then
+dnl         AC_MSG_ERROR([can't locate a suitable python3.])
+dnl 	exit 1
+dnl     else
+dnl 	$PYTHON3_PATH -c << EOF
+dnl import sys
+dnl if not sys.version_info[0] == 3 or not sys.version_info[1] < 5:
+dnl  sys.exit(1)
+dnl 
+dnl EOF
+dnl 	if test $? -ne 0 ; then
+dnl 	   AC_MSG_ERROR([can't locate a suitable python3; must >=3.5.])
+dnl 	   exit 1
+dnl 	fi
+dnl     fi
+dnl fi
+AC_SUBST(PYTHON3_PATH)
+dnl PYTHON3=`basename $PYTHON3_PATH`
+AC_SUBST(PYTHON3)
+
 # look for lockfile utility
 AC_PATH_PROG(MKTEMP,mktemp,no)
 if test $MKTEMP = no; then
@@ -507,7 +533,6 @@ AC_CONFIG_FILES(bin/cssrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/dllogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/elogin bin/erancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/f5rancid, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/f10rancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/flogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/fnlogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/fxlogin, [chmod a+x $ac_file])
@@ -520,7 +545,6 @@ AC_CONFIG_FILES(bin/nlogin bin/nrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/noklogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/nslogin bin/nsrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/panlogin, [chmod a+x $ac_file])
-AC_CONFIG_FILES(bin/prancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/rblogin, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/rivlogin bin/rivrancid, [chmod a+x $ac_file])
 AC_CONFIG_FILES(bin/rrancid, [chmod a+x $ac_file])

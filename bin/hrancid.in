@@ -1,7 +1,5 @@
 #! @PERLV_PATH@
 ##
-## $Id: hrancid.in 3767 2018-02-20 18:13:30Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -205,6 +203,9 @@ sub ShowTechTransceivers {
 	}
 	# KB.16.05.0003 5406R firmware bug
 	next if (/^\s*show time\s*$/i);
+	# Aruba with third-party transceivers
+	last if (/^(\* third-party transceiver)?show time/);
+
 	next if (/^\s*\S{3} \S{3}\s+\d+\s+\d+:\d+:\d+\s+\d+\s*$/);
 
 	ProcessHistory("COMMENTS","keysort","G0",";$_");
@@ -463,12 +464,8 @@ if ($file) {
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
     print(STDERR "executing hlogin -t $timeo -c\"$commandstr\" $host\n") if ($debug || $log);
-    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "hlogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "hlogin failed for $host: $!\n";
-    } else {
-	open(INPUT,"hlogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "hlogin failed for $host: $!\n";
-    }
+    system "hlogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
+    open(INPUT, "< $host.raw") || die "hlogin failed for $host: $!\n";
 }
 
 # determine ACL sorting mode
@@ -547,9 +544,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-    unlink("$host.raw") if (! $debug);
-}
+unlink("$host.raw") if (! $debug);
 
 # check for completeness
 if (scalar(%commands) || !$clean_run) {

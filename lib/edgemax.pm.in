@@ -1,7 +1,5 @@
 package edgemax;
 ##
-## $Id: edgemax.pm.in 3795 2018-04-10 20:48:10Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

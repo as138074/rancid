@@ -1,7 +1,5 @@
 package foundry;
 ##
-## $Id: foundry.pm.in 3424 2016-07-12 14:43:44Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

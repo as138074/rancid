@@ -1,7 +1,5 @@
 package bigip;
 ##
-## $Id: bigip.pm.in 3933 2018-11-30 19:28:47Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

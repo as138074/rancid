@@ -1,7 +1,5 @@
 package mrv;
 ##
-## $Id: mrv.pm.in 3771 2018-03-02 19:52:14Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

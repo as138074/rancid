@@ -1,7 +1,5 @@
 package fortigate;
 ##
-## $Id: fortigate.pm.in 3869 2018-08-19 11:28:06Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

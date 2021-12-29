@@ -1,7 +1,5 @@
 package arbor;
 ##
-## $Id: arbor.pm.in 3960 2019-01-24 18:21:02Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

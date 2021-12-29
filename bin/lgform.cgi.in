@@ -1,7 +1,5 @@
 #! @PERLV_PATH@
 ##
-## $Id: lgform.cgi.in 3763 2018-02-02 19:38:21Z heas $
-##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Henry Kilmer and John Heasley
 ## All rights reserved.

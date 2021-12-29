@@ -1,3 +1,5 @@
+- add user-specific post-filter option per-device-type to filter output before
+  diff (thus affecting mail and commit).
 - allow -r to be specified multiple times for rancid-run/control_rancid
 - add description of the data path/process of a rancid script
 - add configure option to force the location of perl
@@ -8,7 +10,7 @@
 
         add pre-cmd *   term monitor
         add pre-cmd-ios *       term monitor
-
+    -i option
 - it would be useful to log commands that are permission denied rather than
   just failing.  it was mentioned on cisco-isp list.
 - login script should catch output to stdout/user, so that if the rancid script
@@ -122,15 +124,6 @@
 	- show access-list
 	- show ip community-list
 	- show ip route-map
-- prancid - lots of GC'ing to be done
-- prancid - sort logging file by filename.  e.g.:
-	logging file messages facility kernel level debugging
-	logging file log facility any level debugging
-	logging file log archive files 10 size 10m
-	logging file messages archive files 10 size 10m
-  then, sort by facility,  e.g.:
-	logging file messages facility kernel level debugging
-	logging file messages facility authorization level debugging
 - should we add CVS ID header to saved configs?  configurable option? - idea
   from andrew fort
 - cat 2900 extra info

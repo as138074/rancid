@@ -1,7 +1,5 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 3613 2017-02-22 21:37:22Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -46,6 +44,22 @@ if (loadtype($devtype)) {
 if (! defined($lscript)) {
     die "login script not defined for device type $rancid::devtype\n";
 }
+# if the first word of $script is not us (this script), exec the given
+# script.
+my(@script) = split(/\s+/, $script);
+if (which($script[0]) ne which($0)) {
+    # -[hCV] are not handled; they will have already been handled sooner.
+    push(@script, "-d") if $opt_d;
+    push(@script, "-l") if $opt_l;
+    push(@script, "-f") if $opt_f;
+    push(@script, $host);
+    exec(join(" ", @script));
+}
+
+# check that inloop, the input/main loop, is defined
+if (!defined($inloop) || length($inloop) < 1) {
+    die "inloop is not configured for device type $devtype";
+}
 
 # open the temporary file for the digested output
 open(OUTPUT,">$host.new") || die "Can't open $host.new for writing: $!\n";
@@ -69,25 +83,20 @@ if (length($#modules)) {
     }
 }
 
-# open the input, a pre-collected file or start a login for a login stream or
+# open the input; a pre-collected file or start a login for a login stream or
 # temporary file
 if ($file) {
     print(STDERR "opening file $host\n") if ($debug || $log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print(STDERR "executing $lscript -t $timeo -c\"$commandstr\" $host\n") if ($debug || $log);
-    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "$lscript -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
-    } else {
-	open(INPUT,"$lscript -t $timeo -c \"$commandstr\" $host </dev/null |") || die "clogin failed for $host: $!\n";
-    }
+    my $cstr = $commandstr;
+    $cstr =~ s/\"/\\\"/g;
+    print(STDERR "executing $lscript -t $timeo -c\"$cstr\" $host\n") if ($debug || $log);
+    system "$lscript -t $timeo -c \"$cstr\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+    open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
 }
 
 # loop over the input using the provided input/main loop
-if (!defined($inloop) || length($inloop) < 1) {
-    die "inloop is not configured for device type $devtype";
-}
 eval($inloop ."(*INPUT, *OUTPUT);") && die "${inloop} failed: $@\n";
 
 print STDOUT "Done $lscript: $_\n" if ($log);
@@ -97,9 +106,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-    unlink("$host.raw") if (! $debug);
-}
+unlink("$host.raw") if (! $debug);
 
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {

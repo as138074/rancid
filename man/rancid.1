@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid" "1" "22 January 2019"
+.TH "rancid" "1" "25 September 2019"
 .SH NAME
 rancid \- Cisco configuration filter
 .SH SYNOPSIS
@@ -53,9 +53,6 @@ Cisco Anomaly Guard Module (AGM)
 .TP 15
 .B arancid
 Alteon WebOS switches
-.TP 15
-.B arrancid
-Arista Networks devices
 .TP
 .B brancid
 Bay Networks (nortel)
@@ -69,21 +66,17 @@ Cisco content services switches
 .B erancid
 ADC-kentrox EZ-T3 mux
 .TP
-.B f10rancid
-Force10
-.TP
 .B f5rancid
 F5 BigIPs
 .TP
-.B fnrancid
-Fortinet Firewalls
-.TP
 .B rancid
 The generic rancid script; supporting Allied Telesis AW+ devices,
-Arbor Networks Appliances, Ciena Waverserver, Cisco IOS, Cisco IOS-XR,
-Cisco NX-OS, Cisco WLC, (some) Dell switches, Extreme switches,
-Foundry (aka some Brocade) devices, Juniper JUNOS, Nokia (Alcatel-Lucent)
-SR OS, and UBNT Edgemax and EdgeRouter.
+Arbor Networks Appliances, Arista EOS, Ciena Waverserver, Cisco IOS,
+Cisco IOS-XR, Cisco NX-OS, Cisco WLC, (some) Dell switches,
+Extreme switches, Fortinet firewalls, Force10 (aka Dell NOS9),
+Foundry (aka some Brocade) devices, Juniper JUNOS,
+Nokia (Alcatel-Lucent) SR OS, and UBNT Edgemax and EdgeRouter,
+and SMC (some Dell switches).
 It uses the device O/S modules for parsing routines as determined by the
 .BR rancid.types.conf (5)
 file(s).
@@ -104,7 +97,7 @@ Juniper Networks E-series
 MRTd
 .TP
 .B mtrancid
-Mikrotik routesrs
+Mikrotik routers
 .TP
 .B nrancid
 Netscreen firewalls
@@ -112,17 +105,11 @@ Netscreen firewalls
 .B nsrancid
 Netscaler
 .TP
-.B prancid
-Procket Networks
-.TP
 .B rivrancid
 Riverstone
 .TP
 .B rrancid
 Redback
-.TP
-.B srancid
-SMC switch (some Dell OEMs)
 .TP
 .B trancid
 Netopia sDSL/T1 routers
@@ -132,6 +119,17 @@ Xirrus arrays
 .TP
 .B zrancid
 Zebra routing software
+.PP
+If
+.B rancid
+is run for a device type whose script, as defined in
+.B rancid.types.base
+or
+.B rancid.types.conf,
+is not
+.B rancid,
+then that script will be
+.BR exec(2) 'd.
 .PP
 The command-line options are as follows:
 .TP

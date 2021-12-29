@@ -1,7 +1,5 @@
 package nxos;
 ##
-## $Id: nxos.pm.in 3941 2019-01-16 18:55:02Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

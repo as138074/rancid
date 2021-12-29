@@ -100,11 +100,11 @@ CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES = login_top a10login agmrancid alogin arancid \
 	anlogin avologin avorancid blogin brancid brlogin cat5rancid \
 	clogin csblogin cssrancid dllogin elogin erancid f5rancid \
-	f10rancid flogin fnlogin fxlogin hlogin htlogin htrancid \
-	jlogin jerancid mrancid mrvlogin mtrancid mtlogin nlogin \
-	nrancid noklogin nslogin nsrancid panlogin prancid rblogin \
-	rivlogin rivrancid rrancid rtftpcopy tlogin trancid xilogin \
-	xirancid xlogin ulogin wlogin zrancid
+	flogin fnlogin fxlogin hlogin htlogin htrancid jlogin jerancid \
+	mrancid mrvlogin mtrancid mtlogin nlogin nrancid noklogin \
+	nslogin nsrancid panlogin rblogin rivlogin rivrancid rrancid \
+	rtftpcopy tlogin trancid xilogin xirancid xlogin ulogin wlogin \
+	zrancid
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -205,22 +205,20 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/a10login.in \
 	$(srcdir)/cat5rancid.in $(srcdir)/clogin.in \
 	$(srcdir)/csblogin.in $(srcdir)/cssrancid.in \
 	$(srcdir)/dllogin.in $(srcdir)/elogin.in $(srcdir)/erancid.in \
-	$(srcdir)/f10rancid.in $(srcdir)/f5rancid.in \
-	$(srcdir)/flogin.in $(srcdir)/fnlogin.in $(srcdir)/fxlogin.in \
-	$(srcdir)/hlogin.in $(srcdir)/htlogin.in $(srcdir)/htrancid.in \
-	$(srcdir)/jerancid.in $(srcdir)/jlogin.in \
-	$(srcdir)/login_top.in $(srcdir)/mrancid.in \
-	$(srcdir)/mrvlogin.in $(srcdir)/mtlogin.in \
-	$(srcdir)/mtrancid.in $(srcdir)/nlogin.in \
+	$(srcdir)/f5rancid.in $(srcdir)/flogin.in $(srcdir)/fnlogin.in \
+	$(srcdir)/fxlogin.in $(srcdir)/hlogin.in $(srcdir)/htlogin.in \
+	$(srcdir)/htrancid.in $(srcdir)/jerancid.in \
+	$(srcdir)/jlogin.in $(srcdir)/login_top.in \
+	$(srcdir)/mrancid.in $(srcdir)/mrvlogin.in \
+	$(srcdir)/mtlogin.in $(srcdir)/mtrancid.in $(srcdir)/nlogin.in \
 	$(srcdir)/noklogin.in $(srcdir)/nrancid.in \
 	$(srcdir)/nslogin.in $(srcdir)/nsrancid.in \
-	$(srcdir)/panlogin.in $(srcdir)/prancid.in \
-	$(srcdir)/rblogin.in $(srcdir)/rivlogin.in \
-	$(srcdir)/rivrancid.in $(srcdir)/rrancid.in \
-	$(srcdir)/rtftpcopy.in $(srcdir)/tlogin.in \
-	$(srcdir)/trancid.in $(srcdir)/ulogin.in $(srcdir)/wlogin.in \
-	$(srcdir)/xilogin.in $(srcdir)/xirancid.in $(srcdir)/xlogin.in \
-	$(srcdir)/zrancid.in $(top_srcdir)/depcomp \
+	$(srcdir)/panlogin.in $(srcdir)/rblogin.in \
+	$(srcdir)/rivlogin.in $(srcdir)/rivrancid.in \
+	$(srcdir)/rrancid.in $(srcdir)/rtftpcopy.in \
+	$(srcdir)/tlogin.in $(srcdir)/trancid.in $(srcdir)/ulogin.in \
+	$(srcdir)/wlogin.in $(srcdir)/xilogin.in $(srcdir)/xirancid.in \
+	$(srcdir)/xlogin.in $(srcdir)/zrancid.in $(top_srcdir)/depcomp \
 	$(top_srcdir)/mkinstalldirs
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
@@ -291,6 +289,8 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 PERLV = @PERLV@
 PERLV_PATH = @PERLV_PATH@
 PING_PATH = @PING_PATH@
+PYTHON3 = @PYTHON3@
+PYTHON3_PATH = @PYTHON3_PATH@
 RCSSYS = @RCSSYS@
 RSH = @RSH@
 SENDMAIL = @SENDMAIL@
@@ -354,21 +354,19 @@ AUTOMAKE_OPTIONS = foreign
 bin_SCRIPTS = a10login alogin agmrancid anlogin arancid avologin \
 	avorancid blogin brancid brlogin cat5rancid clogin \
 	control_rancid csblogin cssrancid dllogin elogin erancid \
-	f5rancid f10rancid flogin fnlogin fxlogin hlogin hrancid \
-	htlogin htrancid jerancid jlogin mrancid mrvlogin mtlogin \
-	mtrancid nlogin noklogin nrancid nslogin nsrancid panlogin \
-	plogin rancid rblogin rivlogin rivrancid rrancid rtftpcopy \
-	srancid tlogin trancid ulogin wlogin xilogin xirancid xlogin \
-	zrancid lg.cgi lgform.cgi rancid-cvs rancid-fe rancid-run
+	f5rancid flogin fnlogin fxlogin hlogin hrancid htlogin \
+	htrancid jerancid jlogin mrancid mrvlogin mtlogin mtrancid \
+	nlogin noklogin nrancid nslogin nsrancid panlogin plogin \
+	rancid rblogin rivlogin rivrancid rrancid rtftpcopy tlogin \
+	trancid ulogin wlogin xilogin xirancid xlogin zrancid lg.cgi \
+	lgform.cgi rancid-cvs rancid-fe rancid-run
 # XXX hack for the rancid to get pkglibdir, see corresponding XXX below
-bin_in = control_rancid.in hrancid.in plogin.in rancid.in srancid.in
+bin_in = control_rancid.in hrancid.in plogin.in rancid.in
 EXTRA_DIST = lg.cgi.in lgform.cgi.in rancid-cvs.in rancid-fe.in rancid-run.in \
 	$(bin_in) login_top.in
 
 #dist_bin_SCRIPTS= $(bin_SCRIPTS:%=%.in)
-CLEANFILES = lg.cgi lgform.cgi plogin rancid rancid-cvs rancid-fe rancid-run \
-	srancid
-
+CLEANFILES = lg.cgi lgform.cgi plogin rancid rancid-cvs rancid-fe rancid-run
 #CLEANFILES= $(bin_SCRIPTS)
 hpuifilter_SOURCES = hpuifilter.c
 par_SOURCES = par.c
@@ -396,6 +394,8 @@ auto_edit = sed \
 	-e 's,@EXPECT_PATH\@,$(EXPECT_PATH),g' \
 	-e 's,@PERLV\@,$(PERLV),g' \
 	-e 's,@PERLV_PATH\@,$(PERLV_PATH),g' \
+	-e 's,@PYTHON3\@,$(PYTHON3),g' \
+	-e 's,@PYTHON3_PATH\@,$(PYTHON3_PATH),g' \
 	-e 's,@LG_PING_CMD\@,$(LG_PING_CMD),g' \
 	-e 's,@ADMINMAILPLUS\@,$(ADMINMAILPLUS),g' \
 	-e 's,@LOCKPROG\@,$(LOCKPROG),g' \
@@ -478,8 +478,6 @@ erancid: $(top_builddir)/config.status $(srcdir)/erancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 f5rancid: $(top_builddir)/config.status $(srcdir)/f5rancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-f10rancid: $(top_builddir)/config.status $(srcdir)/f10rancid.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 flogin: $(top_builddir)/config.status $(srcdir)/flogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 fnlogin: $(top_builddir)/config.status $(srcdir)/fnlogin.in
@@ -515,8 +513,6 @@ nslogin: $(top_builddir)/config.status $(srcdir)/nslogin.in
 nsrancid: $(top_builddir)/config.status $(srcdir)/nsrancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 panlogin: $(top_builddir)/config.status $(srcdir)/panlogin.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-prancid: $(top_builddir)/config.status $(srcdir)/prancid.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 rblogin: $(top_builddir)/config.status $(srcdir)/rblogin.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -887,7 +883,6 @@ hlogin: $(srcdir)/hlogin.in
 hrancid: $(srcdir)/hrancid.in
 plogin: $(srcdir)/plogin.in
 rancid: $(srcdir)/rancid.in
-srancid: $(srcdir)/srancid.in
 
 lg.cgi: Makefile $(srcdir)/lg.cgi.in
 	rm -f lg.cgi lg.cgi.tmp; \

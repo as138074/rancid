@@ -58,7 +58,12 @@ arcos;inloop;arcos::inloop
 arcos:command;rancid::RunCommand;timestamp disable 
 arcos;command;arcos::ShowVersion;show version
 arcos;command;arcos::ShowFeatures;show features
-arcos;command;arcos::ShowHardware;show hardware
+arcos;command;arcos::ShowHardware;show hardware | notab
+# perhaps replace/augment show hardware with show component <thing>
+#XXX arcos;command;arcos::ShowHardware;show component host*
+#XXX arcos;command;arcos::ShowHardware;show component fan*
+#XXX arcos;command;arcos::ShowHardware;show component psu*
+#XXX arcos;command;arcos::ShowHardware;show component sfp*
 arcos;command;arcos::WriteTerm;show running-config
 #
 arista;script;rancid -t arista
@@ -179,9 +184,11 @@ cisco;command;ios::ShowModule;show module;c6500 ios
 cisco;command;ios::ShowSpeVersion;show spe version
 cisco;command;ios::ShowC7200;show c7200
 cisco;command;ios::ShowCellular;show cellular 0 profile;Cellular modem
+cisco;command;ios::ShowHWProgrammable;show hw-programmable all
 cisco;command;ios::ShowInventory;show inventory raw
 cisco;command;ios::ShowInventory;show inventory;ASA/PIX
 cisco;command;ios::ShowVTP;show vtp status
+cisco;command;ios::ShowDot1x;show dot1x
 cisco;command;ios::ShowVLAN;show vlan
 cisco;command;ios::ShowVLAN;show vlan-switch
 cisco;command;ios::ShowDetail;show switch detail
@@ -251,7 +258,7 @@ cisco-xr;inloop;iosxr::inloop
 cisco-xr;command;rancid::RunCommand;terminal no-timestamp;Disable timestamps XR 3.6
 cisco-xr;command;rancid::RunCommand;terminal exec prompt no-timestamp;Disable timestamps XR 3.8
 cisco-xr;command;iosxr::ShowVersion;admin show version
-cisco-xr;command;iosxr::ShowInstallSummary;admin show install summary;XR image
+cisco-xr;command;iosxr::ShowInstallSummary;admin show install active
 cisco-xr;command;iosxr::ShowLicense;admin show license udi;XR image
 cisco-xr;command;iosxr::ShowLicense;admin show license;XR image
 cisco-xr;command;iosxr::ShowBootVar;admin show variables boot;XR image
@@ -322,6 +329,33 @@ dell;inloop;dell::inloop
 dell;command;dell::GetSystem;show switch
 dell;command;dell::GetConf;show config current_config
 #
+# Dell NOS9 (aka Force 10 and Dell Force10)
+dnos9;script;rancid -t dnos9
+dnos9;login;clogin
+dnos9;module;dnos9
+dnos9;inloop;dnos9::inloop
+dnos9;command;dnos9::ShowVersion;show version
+dnos9;command;dnos9::ShowBoot;show bootvar
+dnos9;command;dnos9::DirSlotN;dir flash:
+dnos9;command;dnos9::DirSlotN;dir slot0:
+dnos9;command;dnos9::ShowChassis;show chassis
+dnos9;command;dnos9::ShowChassis;show system
+dnos9;command;dnos9::ShowInventory;show inventory
+dnos9;command;dnos9::ShowVLAN;show vlan
+dnos9;command;dnos9::WriteTerm;show running
+#
+# Dell NOS10 device (*NOT* Force 10)
+# Dell EMC S5200-ON
+dnos10;script;rancid -t dnos10
+dnos10;login;hlogin
+dnos10;module;dnos10
+dnos10;inloop;dnos10::inloop
+dnos10;command;rancid::RunCommand;terminal length 0
+dnos10;command;dnos10::ShowSys;show system
+dnos10;command;dnos10::ShowVer;show version
+dnos10;command;dnos10::ShowVlan;show vlan
+dnos10;command;dnos10::WriteTerm;show running-configuration
+#
 # UBNT EdgeMAX
 edgemax;script;rancid -t edgemax
 edgemax;login;clogin
@@ -375,6 +409,7 @@ extreme;command;exos::ShowMemory;show memory
 extreme;command;exos::ShowDiag;show diag
 extreme;command;exos::ShowSwitch;show switch
 extreme;command;exos::ShowSlot;show slot
+extreme;command;exos::ShowPolicy;show policy detail
 extreme;command;exos::WriteTerm;show configuration detail
 extreme;command;exos::WriteTerm;show configuration
 #
@@ -411,12 +446,11 @@ bigip13;command;bigip::RunCommandTMSH;cd /
 bigip13;command;bigip::ShowRouteStatic;show /net recursive route static
 bigip13;command;bigip::WriteTerm;list all-properties recursive
 #
-# Force 10 and Dell Force10.
-force10;script;f10rancid
-force10;login;clogin
+# Force 10 and Dell Force10 (aka Dell NOS9).
+force10;alias;dnos9
 #
 # Fortinet Fortigate firewall
-# Normal or FULL configuration
+# Normal or FULL (with defaults) configuration
 fortigate;script;rancid -t fortigate
 fortigate;login;fnlogin
 fortigate;timeout;90
@@ -425,7 +459,7 @@ fortigate;inloop;fortigate::inloop
 fortigate;command;fortigate::GetSystem;get system status
 fortigate;command;fortigate::GetConf;show
 #
-fortigate-full;script;rancid -t fortigate
+fortigate-full;script;rancid -t fortigate-full
 fortigate-full;login;fnlogin
 fortigate-full;timeout;90
 fortigate-full;module;fortigate
@@ -505,7 +539,8 @@ hitachi;script;htrancid
 hitachi;login;htlogin
 #
 # HP Procurve switch such as the 2524, 4108 or J9086A (aka. 2610) procurve 
-# switches, J9091A, and J8698A.  
+# switches, J9091A, and J8698A.
+# Aruba 2530-48G & 5400R series.
 hp;script;hrancid -t hp
 hp;login;hlogin
 #
@@ -619,9 +654,6 @@ paloalto;command;panos::ShowInfo;show system info
 paloalto;command;panos::ShowInventory;show chassis inventory
 paloalto;command;panos::ShowConfig;show config running
 #
-procket;script;prancid
-procket;login;clogin
-#
 redback;script;rrancid
 redback;login;clogin
 #
@@ -639,10 +671,20 @@ riverbed;command;rbt::WriteTerm;show configuration
 riverstone;script;rivrancid
 riverstone;login;rivlogin
 #
-# SMC and Dell PowerConnect N2048, 35xx (3524, 3524P, 3548, 3548P), N4032F,
-# N4064, M6348, 64xx (6428), 7048, M8024(-k), and R1-2401.
-smc;script;srancid
+# SMC and Dell PowerConnect N2048, 34xx (config is incomplete), 35xx (3524,
+# 3524P, 3548, 3548P), N4032F, N4064, 62xxx, M6348, 64xx (6428), 7048,
+# M8024(-k), and R1-2401.
+smc;script;rancid -t smc
 smc;login;hlogin
+smc;timeout;90
+smc;module;smc
+smc;inloop;smc::inloop
+smc;command;rancid::RunCommand;terminal datadump
+smc;command;smc::ShowSys;show system
+smc;command;smc::ShowVer;show version
+smc;command;smc::Dir;dir
+smc;command;smc::ShowVlan;show vlan
+smc;command;smc::WriteTerm;show running-config
 #
 # Nokia (Alcatel-Lucent) SR OS Classic CLI (TiMOS)
 # 7210 SAS, 7250 IXR, 7450 ESS, 7705 SAR, 7750 SR, 7950 XRS, CMG and VSR routers

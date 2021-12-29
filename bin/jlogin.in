@@ -1,7 +1,5 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: jlogin.in 3915 2018-10-29 21:05:01Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -161,6 +159,18 @@ proc login { router user passwd cmethod cyphertype identfile} {
 						  send -- "$user\r"
 						  exp_continue
 	    					}
+	    -nocase -re "last login:"		{
+						  exp_continue
+	    					}
+	    -nocase -re "failed login:"		{
+						  exp_continue
+	    					}
+	    -re "\[\r\n\u0001]\[A-Za-z0-9.-]+ login:"	{
+						  # Fujitsu t100 
+						  # ^<hostname> login:
+						  send -- "$user\r"
+						  exp_continue
+	    					}
 	    "\[Pp]assword:"			{
 						  sleep 1; send -- "$passwd\r"
 						  exp_continue
@@ -270,17 +280,17 @@ foreach router [lrange $argv $i end] {
 
     # Figure out loginname's password (if different from the vty password)
     if {[info exists userpasswd]} {
-      # command line passwd
-      set passwd $userpasswd
+	# command line passwd
+	set passwd $userpasswd
     } else {
-      set passwd [join [lindex [find userpassword $router] 0] ""]
-      if { "$passwd" == "" } {
-        set passwd [join [lindex [find password $router] 0] ""]
-        if { "$passwd" == "" } {
-	  send_user "\nError: no password for $router in $password_file.\n"
-	  continue
-        }
-      }
+	set passwd [join [lindex [find userpassword $router] 0] ""]
+	if { "$passwd" == "" } {
+            set passwd [join [lindex [find password $router] 0] ""]
+            if { "$passwd" == "" } {
+		send_user -- "\nError: no password for $router in $password_file.\n"
+		continue
+            }
+	}
     }
 
     # Figure out identity file to use

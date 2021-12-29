@@ -1,7 +1,5 @@
 package ciscowlc;
 ##
-## $Id: ciscowlc.pm.in 3938 2019-01-09 20:20:57Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

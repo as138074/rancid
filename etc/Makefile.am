@@ -1,9 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 ## A Makefile.in is supplied, in case you do not have automake.
 
-## $Id: Makefile.am 3590 2017-01-10 21:10:30Z heas $
-##
-
 #AUTOMAKE_OPTIONS=foreign no-dependencies
 AUTOMAKE_OPTIONS=foreign
 
@@ -63,6 +60,8 @@ auto_edit = sed \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
 	-e 's,@EXPECT_PATH\@,$(EXPECT_PATH),g' \
 	-e 's,@PERLV_PATH\@,$(PERLV_PATH),g' \
+	-e 's,@PYTHON3\@,$(PYTHON3),g' \
+	-e 's,@PYTHON3_PATH\@,$(PYTHON3_PATH),g' \
 	-e 's,@ENV_PATH\@,$(ENV_PATH),g' \
 	-e 's,@RCSSYS\@,$(RCSSYS),g' \
 	-e 's,@PACKAGE\@,$(PACKAGE),g' \

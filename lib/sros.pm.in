@@ -1,7 +1,5 @@
 package sros;
 ##
-## $Id: sros.pm.in 3939 2019-01-16 18:53:34Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

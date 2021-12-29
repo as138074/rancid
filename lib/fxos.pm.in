@@ -1,7 +1,5 @@
 package fxos;
 ##
-## $Id: fxos.pm.in 3812 2018-05-30 20:53:26Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

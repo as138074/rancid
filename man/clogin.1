@@ -1,6 +1,6 @@
-\"
+.\"
 .hys 50
-.TH "clogin" "1" "22 January 2019"
+.TH "clogin" "1" "12 July 2019"
 .SH NAME
 clogin \- Cisco login script
 .SH SYNOPSIS
@@ -52,7 +52,7 @@ router
 is an
 .BR expect (1)
 script to automate the process of logging into a Cisco router,
-Catalyst switch, Extreme switch, Juniper ERX/E-series, Procket Networks,
+Catalyst switch, Arista switch, Extreme switch, Juniper ERX/E-series,
 or Redback router.
 There are complementary scripts for
 A10,
@@ -61,6 +61,7 @@ Avocent (Cyclades),
 Bay Networks (nortel),
 Cisco Small Business devices,
 ADC-kentrox EZ-T3 mux,
+Fortinet firewalls,
 Foundry,
 HP Procurve switches and Cisco AGMs,
 Hitachi routers,
@@ -76,7 +77,7 @@ Cisco WLCs,
 Extreme devices
 and Xirrus arrays or Arrcus routers,
 named
-.B a10login
+.B a10login,
 .B alogin,
 .B avologin,
 .B blogin,
@@ -123,7 +124,7 @@ The command-line options are as follows:
 .TP
 .B \-S
 Save the configuration on exit, if the device prompts at logout time.
-This only has affect when used with -s.
+This only has affect when used with -c.
 .TP
 .B \-V
 Prints package name and version strings.
