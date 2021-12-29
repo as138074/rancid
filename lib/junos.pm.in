@@ -1,7 +1,5 @@
 package junos;
 ##
-## $Id: junos.pm.in 3462 2016-09-12 20:33:41Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 # 
@@ -20,14 +18,14 @@ $Exporter::Verbose=1;
 use rancid @VERSION@;
 
 our $ShowChassisSCB;			# Only run ShowChassisSCB() once
+our $ShowChassisFirmware;		# Only run ShowChassisFirmware() once
+
 
 @ISA = qw(Exporter rancid main);
 #our @EXPORT = qw($VERSION)
 
 # load-time initialization
 sub import {
-    $timeo = 120;			# jlogin timeout in seconds
-
     0;
 }
 
@@ -36,6 +34,7 @@ sub init {
     # add content lines and separators
     ProcessHistory("","","","#RANCID-CONTENT-TYPE: $devtype\n#\n");
 
+    $junos::ShowChassisFirmware = 0;
     0;
 }
 
@@ -49,7 +48,7 @@ TOP: while (<$INPUT>) {
 	if (/^Error:/) {
 	    print STDOUT ("$host jlogin error: $_");
 	    print STDERR ("$host jlogin error: $_") if ($debug);
-	    $clean_run=0;
+	    $clean_run = 0;
 	    last;
 	}
 	if (/System shutdown message/) {
@@ -91,7 +90,7 @@ TOP: while (<$INPUT>) {
 	    }
 	}
 	if (/>\s*quit/) {
-	    $clean_run=1;
+	    $clean_run = 1;
 	    last;
 	}
     }
@@ -108,9 +107,11 @@ sub ShowChassisClocks {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
+	/error: abnormal communication termination with / && return(-1);
+	/error: invalid xml tag / && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -152,7 +153,7 @@ sub ShowChassisEnvironment {
 	last if (/^$prompt/);
 	return 1 if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -164,7 +165,7 @@ sub ShowChassisEnvironment {
 	/ backplane temperature/ && next;
 	/(\s*Power supply.*), temperature/ &&
 		ProcessHistory("","","","# $1\n") && next;
-	/(\s*.+) +\d+ degrees C.*$/ &&
+	/(\s*.+) +-?\d+ degrees C.*$/ &&
 		ProcessHistory("","","","# $1\n") && next;
 	/(^.*\S)\s+ Spinning at .*$/ &&
 		ProcessHistory("","","","# $1\n") && next;
@@ -187,10 +188,11 @@ sub ShowChassisFirmware {
     while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
-	return 1 if (/^aborted!/i);
+	return(1) if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
+	return(0) if ($junos::ShowChassisFirmware);
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
 	/Unrecognized command/ && return(1);
@@ -198,8 +200,10 @@ sub ShowChassisFirmware {
 	/^\s+\^/ && return(1);
 	/syntax error/ && return(1);
 
-	ProcessHistory("","","","# $_");
+	s/\s*$//;
+	ProcessHistory("","","","# $_\n");
     }
+    $ShowChassisFirmware = 1;
     return(0);
 }
 
@@ -215,7 +219,7 @@ sub ShowChassisFpcDetail {
 	last if (/^$prompt/);
 	return 1 if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -244,7 +248,7 @@ sub ShowChassisHardware {
 	last if (/^$prompt/);
 	return 1 if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -270,7 +274,7 @@ sub ShowChassisRoutingEngine {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
@@ -283,6 +287,8 @@ sub ShowChassisRoutingEngine {
 	/ Slot / && ProcessHistory("","","","# $_") && next;
 	/ Current state/ && ProcessHistory("","","","# $_") && next;
 	/ Election priority/ && ProcessHistory("","","","# $_") && next;
+	s/ (DRAM\s+)\d+ \w+ \((\d+ \w+) installed\)\s*/ $1$2\n/
+		&& ProcessHistory("","","","# $_") && next;
 	/ DRAM/ && ProcessHistory("","","","# $_") && next;
 	/ Model/ && ProcessHistory("","","","# $_") && next;
 	/ Serial ID/ && ProcessHistory("","","","# $_") && next;
@@ -304,7 +310,7 @@ sub ShowChassisSCB {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	return(0) if ($junos::ShowChassisSCB);
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
@@ -338,7 +344,7 @@ sub ShowChassisAlarms {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -361,7 +367,7 @@ sub ShowSystemAutoinstall {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -373,6 +379,36 @@ sub ShowSystemAutoinstall {
     return(0);
 }
 
+# This routine parses "show system configuration database usage"
+# XXX this does not work with older JunOS because the unrecognized command
+#     is mangled by the cli parser and then does not match what was sent!
+#     so, this is a stand-alone function for now.
+sub ShowSystemConfDB {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowSystemConfDB: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<$INPUT>) {
+	tr/\015//d;
+	($found_end = 1, last) if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
+
+	/Unrecognized command/ && return(0);
+	/command is not valid/ && return(0);
+	/^\s+\^/ && return(0);
+	/syntax error/ && return(0);
+
+	# trim fractional part of the sizes to reduce churn
+	s/\.\d+ ([GKM]B)/ $1/;
+
+	ProcessHistory("","","","# $_");
+    }
+    return(0);
+}
+
+
 sub ShowSystemCoreDumps {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowSystemCoreDumps: $_" if ($debug);
@@ -382,6 +418,7 @@ sub ShowSystemCoreDumps {
     while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -406,23 +443,40 @@ sub ShowSystemLicense {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
+	return -1 if (/error: select: protocol failure /i);
+	return -1 if (/error: abnormal communication /i);
 
 	# licenses used changes constantly.  distill it to a percentage.
-	if (/^(\s+scale-subscriber)(\s+)(\d+)(\s+\d+)(.*$)/) {
+	# example input:
+	# License usage:
+	#                                  Licenses     Licenses    Licenses    Expiry
+	#   Feature name                       used    installed      needed
+	#   dynamic-vpn                           1            2           0    permanent
+	if (/^(\s+(?:VMX|dynamic|mobile|scale|service|scale-subscriber|subscriber)-\S+)(\s+)(\d+)(\s+\d+)(.*$)/) {
 	    my($a, $sp, $used, $avail, $rem) = ($1, $2, $3, $4, $5);
 	    my($spl, $usedl) = (length($sp), length($used));
-	    my($pcnt);
+	    my($pcnt, $usage, $usagel);
 	    if ($avail < 1) {
 		$pcnt = ">100";
+		$usage = ">0";
 	    } else {
-		$pcnt = int(($used + 0.0) / ($avail + 0.0) * 100);
+		if ($filter_osc >= 2) {
+		    $usage = "--";
+		} elsif ($avail < 100) {
+		    # if license count is small, percentage doesn't do much to
+		    # stabilize the output - just skip it.
+		    $usage = "--";
+		} else {
+		    $pcnt = int(($used + 0.0) / ($avail + 0.0) * 100);
+		    $usage = sprintf("%s%%", $pcnt);
+		}
 	    }
-	    my($pcntl) = length($pcnt) + 1;
-	    $spl = $spl + $usedl - $pcntl;
+	    $usagel = length($usage) ;
+	    $spl = $spl + $usedl - $usagel;
 
-	    my($fmt) = "%s%-" . $spl . "s%s%%%s%s\n";
-	    $_ = sprintf($fmt, $a, "", $pcnt, $avail, $rem);
+	    my($fmt) = "%s%-" . $spl . "s%s%s%s\n";
+	    $_ = sprintf($fmt, $a, "", $usage, $avail, $rem);
 	}
 
 	/Unrecognized command/ && return(1);
@@ -446,7 +500,7 @@ sub ShowSystemLicenseKeys {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -469,7 +523,7 @@ sub ShowSystemBootMessages {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
@@ -499,8 +553,9 @@ sub ShowVersion {
 	return -1 if (/select: protocol failure /i);	# fail sending cmd
 	next if (/^\s*$/);
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 	/error: abnormal communication termination with / && return(-1);
+	/error: could not connect to \S+ ?: no route to host/i && return(1);
 
 	/warning: .* subsystem not running - not needed by configuration/ && next;
 
@@ -531,8 +586,8 @@ sub ShowConfiguration {
 	    last;
 	}
 	next if (/^system (shutdown message from|going down )/i);
-	next if (/^\{(master|backup)(:\d+)?\}/);
-	next if (/^\{(primary|secondary)(:\d+)?\}/);
+	next if (/^## last commit: /i);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
 	$lines++;
 
 	/^database header mismatch: / && return(-1);

@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "rancid" "1" "24 May 2016"
+.TH "rancid" "1" "22 April 2020"
 .SH NAME
 rancid \- Cisco configuration filter
 .SH SYNOPSIS
@@ -17,10 +17,10 @@ rancid \- Cisco configuration filter
 .B rancid
 is a collection of 
 .BR perl (1)
-scripts which uses the login scripts (see
+scripts which use the login scripts (see
 .BR clogin (1))
 to login to a device, execute commands to display the configuration, etc,
-then filters the output for formatting, security, and so on.
+then filters the output for formatting, security, and so forth.
 .B rancid's
 product is a file with the name of it's last argument plus the suffix .new.
 For example,
@@ -53,9 +53,6 @@ Cisco Anomaly Guard Module (AGM)
 .TP 15
 .B arancid
 Alteon WebOS switches
-.TP 15
-.B arrancid
-Arista Networks devices
 .TP
 .B brancid
 Bay Networks (nortel)
@@ -69,21 +66,17 @@ Cisco content services switches
 .B erancid
 ADC-kentrox EZ-T3 mux
 .TP
-.B f10rancid
-Force10
-.TP
 .B f5rancid
 F5 BigIPs
 .TP
-.B fnrancid
-Fortinet Firewalls
-.TP
 .B rancid
-The generic rancid script; supporting Allied Telesis AW+ devices, Arbor
-Networks Appliances, Ciena Waverserver, Cisco IOS, Cisco IOS-XR, Cisco
-NX-OS, Cisco WLC, (some) Dell switches, Extreme switches, Foundry (aka
-some Brocade) devices, Compass EOS, Juniper JUNOS, and UBNT Edgemax and
-EdgeRouter.
+The generic rancid script; supporting Allied Telesis AW+ devices,
+Arbor Networks Appliances, Arista EOS, Ciena Waverserver, Cisco IOS,
+Cisco IOS-XR, Cisco NX-OS, Cisco WLC, (some) Dell switches,
+Extreme switches, Fortinet firewalls, Force10 (aka Dell NOS9),
+Foundry (aka some Brocade) devices, FRR Routing S/W (formerly Quagga
+or Zebra), Juniper JunOS and JunOS EVO, Nokia (Alcatel-Lucent) SR OS,
+and UBNT Edgemax and EdgeRouter, and SMC (some Dell switches).
 It uses the device O/S modules for parsing routines as determined by the
 .BR rancid.types.conf (5)
 file(s).
@@ -103,17 +96,11 @@ Juniper Networks E-series
 .B mrancid
 MRTd
 .TP
-.B mtrancid
-Mikrotik routesrs
-.TP
 .B nrancid
 Netscreen firewalls
 .TP
 .B nsrancid
 Netscaler
-.TP
-.B prancid
-Procket Networks
 .TP
 .B rivrancid
 Riverstone
@@ -121,17 +108,22 @@ Riverstone
 .B rrancid
 Redback
 .TP
-.B srancid
-SMC switch (some Dell OEMs)
-.TP
 .B trancid
 Netopia sDSL/T1 routers
 .TP
 .B xirancid
 Xirrus arrays
-.TP
-.B zrancid
-Zebra routing software
+.PP
+If
+.B rancid
+is run for a device type whose script, as defined in
+.B rancid.types.base
+or
+.B rancid.types.conf,
+is not
+.B rancid,
+then that script will be
+.BR exec(2) 'd.
 .PP
 The command-line options are as follows:
 .TP

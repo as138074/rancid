@@ -1,7 +1,5 @@
 package aeos;
 ##
-## $Id: aeos.pm.in 3450 2016-08-25 14:05:44Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -99,7 +97,7 @@ sub ShowVersion {
 
     while (<$INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { $found_version = 1; last};
+	if (/^$prompt/) {$found_version = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^% Invalid input/;
 	return(0) if ($found_version);		# Only do this routine once
@@ -107,12 +105,12 @@ sub ShowVersion {
 	next if (/uptime is/);			# Older AOS show uptime
         my($key, $val) = split(/:\s+/, $_, 2);
         if (! $val) {
-           # Must be the model name if there's no colon
-           ProcessHistory("COMMENTS", "", "", "!Model: $_" );
-           next;
+	    # Must be the model name if there's no colon
+	    ProcessHistory("COMMENTS", "", "", "!Model: $_" );
+	    next;
         }
         if ($key ne 'Uptime' and $key ne 'Free memory') {
-           ProcessHistory("COMMENTS", "", "", "!$key: $val" );
+	    ProcessHistory("COMMENTS", "", "", "!$key: $val" );
         }
     }
     return(0);
@@ -144,11 +142,11 @@ sub DiffConfig {
 sub ShowEnv {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowEnv: $_" if ($debug);
-    my($fans, $supplies, $E0) = (0, 0, undef);
+    my($fans, $E0) = (0, undef);
 
     while (<$INPUT>) {
 	tr/\015//d;
-	if (/^$prompt/) { $found_env = 1; last};
+	if (/^$prompt/) {$found_env = 1; last};
 	next if (/^(\s*|\s*$cmd\s*)$/);
 	return(1) if /^% Invalid input/;
 	return(0) if ($found_env);		# Only do this routine once
@@ -159,19 +157,25 @@ sub ShowEnv {
 	}
         /^(System \S+ status is|Action on overheat|Airflow)/ &&
 	    ProcessHistory("COMMENTS","keysort","E0","!$_") && next;
-        if ( /^Fan\s+Status\s+/ ) {
-            $fans = 1;
-            next;
+        if (/^Fan\s+Status\s+/) {
+	    $fans = 1;
+	    next;
         }
         $fans && /^\s*(\d+)\s+(\S+)/ &&
-            ProcessHistory("COMMENTS","keysort","E1","!Fan $1: $2\n") && next;
-        if ( /^Supply\s+Model\s+Capacity/ ) {
-            $fans = 0;
-            $supplies = 1;
-            next;
+	    ProcessHistory("COMMENTS","keysort","E1","!Fan $1: $2\n") && next;
+        if (/^supply\s+model\s+capacity/i) {
+	    while (<$INPUT>) {
+		tr/\015//d;
+		last if (/^\s*/);
+		if (/^$prompt/) {$found_version = 1; last};
+		/^\s*(\d+)\s+(\S+)\s+(\S+)\s+\S+\s+\S+\s+\S+\s+(\S+)/ &&
+		    ProcessHistory("COMMENTS","keysort","E2","!Power Supply $1: $2 $3 $4\n");
+		    next;
+		/^\s*Total\s+\S+\s+(\S+)\s+/ &&
+		    ProcessHistory("COMMENTS","keysort","E2","!Power Total: $1\n") &&
+		    next;;
+	    }
         }
-        $supplies && /^\s*(\d+)\s+(\S+)\s+(\S+)\s+\S+\s+\S+\s+\S+\s+(.+)/ &&
-            ProcessHistory("COMMENTS","keysort","E2","!Power Supply $1: $2 $3 $4\n" ) && next;
     }
     ProcessHistory("COMMENTS","","","!\n");
     return(0);
@@ -208,8 +212,8 @@ sub ShowBootExt {
 	tr/\015//d;
 	last if (/^$prompt/);
 	next if (/^(\s*|\s*$cmd\s*)$/);
-	return(1) if /^% Invalid input/;
-        return(0) if /^% Error displaying /;
+	return(1) if (/^% Invalid input/);
+        return(0) if (/^% Error displaying /);
 
 	if (!defined($C0)) {
 	    $C0 = 1; ProcessHistory("COMMENTS","","","!\n");
@@ -328,6 +332,9 @@ sub WriteTerm {
 	/^ speed / && $lineauto	&& next; # kill speed on serial lines
 	/^ clockrate /		&& next; # kill clockrate on serial interfaces
 	/^! Time: /		&& next; # EOS gives the time that a "show running" command was run
+
+	next if (/(^\*+$|unsaved changes exist)/i);
+
 	if (/^(enable )?(password|passwd)( level \d+)? / && $filter_pwds >= 1) {
 	    ProcessHistory("ENABLE","","","!$1$2$3 <removed>\n");
 	    next;

@@ -1,14 +1,12 @@
 #! @PERLV_PATH@
 ##
-## $Id: lgform.cgi.in 3467 2016-09-20 21:33:29Z heas $
-##
 ## @PACKAGE@ @VERSION@
 ## Copyright (c) @COPYYEARS@ by Henry Kilmer and John Heasley
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
-## Henry Kilmer, John Heasley, Andrew Partan, Pete Whiting, Austin Schutz,
-## and Andrew Fort.
+## Henry Kilmer, John Heasley, Andrew Partan,
+## Pete Whiting, Austin Schutz, and Andrew Fort.
 ##
 ## Redistribution and use in source and binary forms, with or without
 ## modification, are permitted provided that the following conditions
@@ -18,15 +16,9 @@
 ## 2. Redistributions in binary form must reproduce the above copyright
 ##    notice, this list of conditions and the following disclaimer in the
 ##    documentation and/or other materials provided with the distribution.
-## 3. All advertising materials mentioning features or use of this software
-##    must display the following acknowledgement:
-##        This product includes software developed by Henry Kilmer and John
-##        Heasley and its contributors for RANCID.
-## 4. Neither the name of RANCID nor the names of its
+## 3. Neither the name of RANCID nor the names of its
 ##    contributors may be used to endorse or promote products derived from
 ##    this software without specific prior written permission.
-## 5. It is requested that non-binding fixes and modifications be contributed
-##    back to RANCID.
 ##
 ## THIS SOFTWARE IS PROVIDED BY Henry Kilmer, John Heasley AND CONTRIBUTORS
 ## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,6 +32,17 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 ##
+## It is the request of the authors, but not a condition of license, that
+## parties packaging or redistributing RANCID NOT distribute altered versions
+## of the etc/rancid.types.base file nor alter how this file is processed nor
+## when in relation to etc/rancid.types.conf.  The goal of this is to help
+## suppress our support costs.  If it becomes a problem, this could become a
+## condition of license.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
+#  The original looking glass software was written by Ed Kern, provided by
+#  permission and modified beyond recognition.
 #
 # The original original lookingglass s/w was written by Ed Kern.  It was
 # a single script that used to be available at http://nitrous.digex.net/.
@@ -61,6 +64,11 @@ my(@rtrlist, %rtrlabels);
 my($BASEDIR) = "@prefix@";
 my($SYSCONFDIR) = "@sysconfdir@";
 my($LOCALSTATEDIR) = "@localstatedir@";
+
+my($cache_dir);
+
+my($LG_CACHE_DIR, $LG_CLOGINRC, $LG_IMAGE, $LG_INFO, $LG_LOG, $LG_ROUTERDB);
+my($LG_AS_REG, $LG_BGP_RT, $LG_CACHE_TIME, $LG_SINGLE, $LG_STRIP);
 
 # note: the following functions are duplicated between lgform.cgi and lg.cgi
 # to avoid the need for module inclusion headaches from within a httpd context.
@@ -103,6 +111,7 @@ sub readconf
 {
     my($conffile, $cmds);
     local(*CONF);
+
     if (defined($ENV{LG_CONF})) {
 	$conffile = $ENV{LG_CONF};
     } elsif (-e "lg.conf") {
@@ -206,6 +215,16 @@ sub readrouters
 # read the configuration file if it exists.
 readconf();
 
+# The script will now cache the results as simple files in the $cache_dir,
+# named after the type of query (queries must, of course, be one word with
+# no spaces).  Modify $LG_CACHE_TIME to set the lifetime for cache entries.
+# for most web servers, cache_dir must be writable by uid nobody
+if (defined($LG_CACHE_DIR)) {
+    $cache_dir = $LG_CACHE_DIR;
+} else { 
+    $cache_dir = "./tmp";
+}
+
 $query = new CGI;
 
 print $query->header;
@@ -227,7 +246,7 @@ print <<HEAD ;
 HEAD
 
 # start table, etc here
-print $query->startform( -action => 'lg.cgi', -method => 'POST');
+print $query->start_form( -action => 'lg.cgi', -method => 'POST');
 print <<DOTABLE ;
 <center>
 <table border cellspacing=0 width=575 align=center>
@@ -275,7 +294,7 @@ TABLEEND
 
 print $query->submit(-name => 'submit', -value =>'Submit');
 print $query->reset;
-print $query->endform;
+print $query->end_form;
 
 print <<TAIL ;
 </center>

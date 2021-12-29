@@ -1,4 +1,4 @@
-Frequently Asked Questions about rancid - last updated 20160808.
+Frequently Asked Questions about rancid - last updated 20180408.
 
 This FAQ contains information that may not apply directly to versions of
 rancid prior to 3.0.  It also contains paths containing tags such as
@@ -105,6 +105,26 @@ A. The directory was not imported into CVS properly or was not properly checked
    control bits.
 
 
+Q. Errors are showing up in the logs like:
+	cvs commit: Up-to-date check failed for `filename'
+A. This could mean that the version of the file that rancid has is older than
+   the one in repository or that the file is missing.  That could be due to a
+   filesystem error, a system crash, a rancid crash or premature termination,
+   or some third party altering the repository or rancid's local repository.
+   Third parties should NOT alter the repository or rancid's local repository,
+   except for editing the router.db file.  All other modificiations should be
+   left to rancid's automation.
+
+   To recover, run cvs update in the group's directory as the rancid user.  If
+   the update fails or creates conflict, the files can be removed and the cvs
+   update re-run.  Some files are not saved in cvs, but these will be
+   re-created without harm..
+
+   Some have asked why rancid does not run a cvs (or svn or git) update itself.
+   If it did, it could inherit malicious modifications in the repository meant
+   to hide the modifications.
+
+
 Q. I keep receiving the same diff for a (or set of) devices, but I know the
    data is not changing repeatedly.  Why?
 A. This is probably a CVS or filesystem permissions problem.  Check the log
@@ -190,6 +210,20 @@ A. As far as I know, CVS does not provide a way to remove directories.  First,
 	% rm -rf fubar CVS/fubar
 
 
+Q. I would like to place my git repository on a remote machine.  How do I do
+   that?
+A. We suggest that you configure git to push a clone to the remote.  That is,
+   create the rancid group as normally done, including running rancid-cvs(1).
+   Then add a push url to the existing origin.
+
+	% cd $BASEDIR/<group>
+	% git remote add <somename> <giturlofexistingremote>
+	% git remote set-url --add --push origin $CVSROOT/<group>
+	% git remote set-url --add --push origin <giturlofexistingremote>
+
+   http://www.shrubbery.net/pipermail/rancid-discuss/2018-August/010348.html
+
+
 Q. I would like to place my CVS repository on a remote machine.  How do I do
    that?
 A. Assuming that you're starting fresh, its quite simple.  Before running
@@ -202,8 +236,8 @@ A. Assuming that you're starting fresh, its quite simple.  Before running
 
 
 Q. I need a web interface to the rancid CVS repository, for the CVS unsavvy.
-A. cvsweb works with rancid.  Other similar software may exist as well and
-   there are similar tools for Subversion and git.
+A. cvsweb works with rancid.  Other software may exist for CVS and there are
+   similar tools for Subversion and git.
 	http://www.freebsd.org/projects/cvsweb.html
    cvsweb.conf:
 	@CVSrepositories = (
@@ -221,39 +255,54 @@ A. Have you updated the format of your router.db files?  The field separator
 Q. I have a (set of) device(s) on which collection fails.  How can I debug
    this?
 A. Our usual diagnostic procedure for this is:
-   - Make sure that the appropriate *login (example: clogin for cisco) works.
-     This tests to make sure you don't have routing or firewall issues, DNS
-     or hostname errors, that your .cloginrc is correct, your banner does
-     not have some character that *login does not like, and that the *login
-     script doesn't have a bug of some sort.  For example:
+   - Make sure that the appropriate login script (example: clogin for cisco)
+     works (see rancid.types.base).  Use these tests to make sure you don't
+     have routing or firewall issues, DNS or hostname errors, that your
+     .cloginrc is correct, your banner does not have some character that the
+     login script confuses for a prompt, and that the login script doesn't
+     have a bug of some sort.  For example:
 
-        clogin cisco_router
+	clogin cisco_router
 
-     Should login to cisco_router and produce a router prompt that you can
-     use normally, as if clogin were not used (i.e.: telnet cisco_router).
+     This should login to cisco_router and produce a router prompt that you
+     can use normally (interactively), as if clogin were not used (i.e.:
+     telnet cisco_router).  Also, see the next FAQ entry.
 
-   - See if commands can be executed on the router via clogin.  This will
-     exercise the *login functionality needed for rancid.  For example:
+   - Verify that commands can be executed on the router via the login script.
+     This will exercise the script functionality needed for rancid.  For
+     example:
 
-        clogin -c 'show version; show diag' cisco_router
+	clogin -c 'show version; show diag' cisco_router
 
      Should login to cisco_router, run show version and show diag, then
-     disconnect and exit.  The output will be displayed on your terminal.
+     disconnect and exit.  The output will be displayed on your terminal.  Use
+     commands appropriate for the device; for rancid modules converted to perl
+     modules, rancid -t <device type> -C produces the full list of commands
+     that rancid would normally run.
 
    - Then see if the correct rancid commands work against the router.  For
      example:
 
-        rancid -t cisco cisco_router
+	rancid -t cisco cisco_router
 
      Should produce a cisco_router.new file (cooked to a golden rancid-style
      colour) in the current directory.  If it does not, try again with the
-     -d option, so that the cisco_router.new file will not be removed if
-     an error is detected.  Note: if you have NOPIPE set in your environment,
-     a cisco_router.raw file will be produced that is the raw output of the
-     dialogue with the device.
+     -d option, so that the cisco_router.new and cisco_router.raw files will
+     not be removed if an error is detected.  The cisco_router.raw file is
+     the raw output of the dialogue with the device, and with the -d option,
+     the .raw file will not be deleted at the end, which is helpful to see all
+     the input.  The -l option is also useful for logging.  Note: in versions
+     prior to 3.10, NOPIPE=YES must be set in your environment to produce the
+     cisco_router.raw file.
 
    If all of these work, make sure that the device's entry in the group's
    router.db file is correct and check the group's last log file for errors.
+
+
+Q. A login script is failing to login to a device with an authentication error.
+   I have the correct information in my .cloginrc.
+A. It is useful to verify that the information that you this is used, really
+   id.  See clogin(1) for the [Mm] options.
 
 
 Q. I am receiving persistent diffs for up/down/added/deleted devices in
@@ -515,10 +564,13 @@ Q. I wrote scripts for an unsupported device in rancid 2.x, but I am upgrading
 A. Yes.  The device type must be added to etc/rancid.types.conf such as:
 	DeviceTypeName;script;RancidScriptName
 	DeviceTypeName;login;LoginScriptName
-   See rancid.types.conf(5)
+   eg:
+	alteon;script;arancid
+	alteon;login;alogin
+   See rancid.types.conf(5).
 
 
-Q. I Have a device that is not supported by rancid.  How can I added support
+Q. I Have a device that is not supported by rancid.  How can I add support
    for it?
 A. You should first search the rancid-discuss mail list and the web for
    previous art.  Someone may have already accomplished or begun the task.
@@ -527,7 +579,7 @@ A. You should first search the rancid-discuss mail list and the web for
    someone.
 
    If you must write one, it is helpful to have a basic understanding of
-   rancid's general process.  See rancid_intro(1) and this maillist thread
+   rancid's general process.  See rancid_intro(7) and this maillist thread
    thread:
    http://www.shrubbery.net/pipermail/rancid-discuss/2015-August/008630.html .
 
@@ -564,7 +616,19 @@ A. You should first search the rancid-discuss mail list and the web for
 
    After the login script works, work on the rancid library.  First the inloop
    function, followed by the filter functions.  See tips regarding rancid -d
-   and the environment variable NOPIPE earlier in this FAQ.
+   and .raw files earlier in this FAQ.
+
+
+Q. I wish to extend an existing rancid device type with an additional command
+   or alter the filtering of an existing command.  What is the recommended way
+   to do this?
+
+A. It is recommended that a new device type is defined, so that future upgrades
+   can proceed more smoothly.  To do so, read the previous question in this FAQ
+   and see the device type iosshtech in rancid.types.conf(5) for an example of
+   altering the commands run for an existing device type ("ios"), adding a
+   command and adding a new filtering function.
+   
 
 
 5) O/S specific
@@ -621,6 +685,16 @@ A. No.  rancid-discuss@, etc. are not Mail Transport Agent (MTA) support
    mail to the per-rancid-group aliases manually using your favorite Mail User
    Agent (MUA) (Mail, mail, mutt, pine, etc) and see debugging options that
    your MTA and MUA offer for providing more logs, delivery receipts, etc.
+
+
+Q. I just want to store configrurations, I do not want to receive diffs.  How
+   can I accomplish this?
+A. Use procmail to filter them out of your inbox.
+   OR, redirect the mail aliases in your MTA's aliases file or database to a
+   mailman list with no subscribers.
+   OR, redirect the mail aliases to /dev/null.
+   OR, set DIFFSCRIPT in rancid.conf to something that eats it's input, such
+   as "dd of=/dev/null bs=16k".
 
 
 7) I am still stuck

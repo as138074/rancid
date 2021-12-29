@@ -1,6 +1,6 @@
 .\"
 .hys 50
-.TH "router.db" "5" "17 June 2016"
+.TH "router.db" "5" "5 May 2020"
 .SH NAME
 router.db \- rancid group configuration file
 .SH DESCRIPTION
@@ -50,7 +50,7 @@ The type of device from the set:
 .TP
 .ID 15n
 .B agm
-A Cisco Anomoly Guard Module (aka Riverhead).
+A Cisco Anomaly Guard Module (aka Riverhead).
 Suspect that at some point the UI will become more cisco-like and it
 can be merged with the IOS rancid module.
 .TP
@@ -59,12 +59,12 @@ can be merged with the IOS rancid module.
 An Alteon WebOS switches.
 .TP
 .ID 15n
-.B arista
-An Arista Networks device.
+.B arcos
+An Arrcus router.
 .TP
 .ID 15n
-.B avocent
-An Avocent Cyclades console server.
+.B arista
+An Arista Networks device.
 .TP
 .ID 15n
 .B baynet
@@ -86,7 +86,11 @@ A Ciena Waveserver.
 .ID 15n
 .B cisco
 A Cisco router, PIX, or switch such as the 3500XL or 6000 running IOS (or
-IOS-like) OS, but not IOS-XR.
+IOS-like) OS, but not IOS-XR, NX-OS or Cisco small business devices.
+.TP
+.ID 15n
+.B cisco-sb
+A Cisco small business devices.
 .TP
 .ID 15n
 .B cisco-nx
@@ -119,6 +123,10 @@ device type.
 A Juniper E-series edge router.
 .TP
 .ID 15n
+.B fss2
+A Fujitsu FSS2/1finity device.
+.TP
+.ID 15n
 .B dell
 A Dell switch.
 Known working models are DES-3010F, DES-3052P, DES-3526, and DES-3550.
@@ -147,6 +155,10 @@ A Force10 router.
 A Fortinet firewall.
 .TP
 .ID 15n
+.B fortigate-full
+A Fortinet firewall with all defaults shown.
+.TP
+.ID 15n
 .B foundry
 A Foundry router, switch, or router-switch.  This includes HP
 Procurve switches that are OEMs of Foundry products, such as the
@@ -168,9 +180,6 @@ type.
 .B juniper
 A Juniper router.
 .TP
-.B mikrotik
-A Mikrotik router.
-.TP
 .B mrtd
 A host running the (Merit) MRTd daemon.
 .TP
@@ -179,8 +188,8 @@ A MRV optical device; including NC316, OptiSwitch 904, OptiSwitch 906G,
 OptiSwitch 912C, OptiSwitch 940.
 .TP
 .ID 15n
-.B netscalar
-A Netscalar load balancer.
+.B netscaler
+A Netscaler load balancer.
 .TP
 .ID 15n
 .B netscreen
@@ -191,10 +200,6 @@ A Netscreen firewall.
 A Palo Alto Networks device.
 .TP
 .ID 15n
-.B procket
-A Procket router.
-.TP
-.ID 15n
 .B redback
 A Redback router, NAS, etc.
 .TP
@@ -203,13 +208,17 @@ A Redback router, NAS, etc.
 A Riverstone NAS or Cabletron (starting with version ~9.0.3) router.
 .TP
 .ID 15n
+.B routeros
+A Mikrotik RouterOS router.
+.TP
+.ID 15n
 .B smc
 A SMC switch, which also account for some Dell OEMs.
 Including Dell PowerConnect 35xx (3524, 3524P, 3548, 3548P) and 7048.
 .TP
 .ID 15n
-.B ciscowlc
-A Cisco WLC.
+.B sros
+A Nokia (Alcatel-Lucent) router, such as the 7750 SR.
 .TP
 .ID 15n
 .B xirrus
@@ -244,7 +253,7 @@ report of routers in router.db that are not marked "up".
 .B [comments]
 Freeform string to describe the current state of the router.
 .PP
-A ``#'' at the begining of a line is a comment; the entire line is
+A ``#'' at the beginning of a line is a comment; the entire line is
 ignored.
 .PP
 If a device is deleted from the 

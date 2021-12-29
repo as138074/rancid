@@ -1,13 +1,11 @@
 #! /bin/sh
 ##
-## $Id: control_rancid.in 3518 2016-11-30 00:41:36Z heas $
-##
 ## @PACKAGE@ @VERSION@
-## Copyright (c) @COPYYEARS@ by Terrapin Communications, Inc.
+## Copyright (c) @COPYYEARS@ by Henry Kilmer and John Heasley
 ## All rights reserved.
 ##
 ## This code is derived from software contributed to and maintained by
-## Terrapin Communications, Inc. by Henry Kilmer, John Heasley, Andrew Partan,
+## Henry Kilmer, John Heasley, Andrew Partan,
 ## Pete Whiting, Austin Schutz, and Andrew Fort.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -18,17 +16,11 @@
 ## 2. Redistributions in binary form must reproduce the above copyright
 ##    notice, this list of conditions and the following disclaimer in the
 ##    documentation and/or other materials provided with the distribution.
-## 3. All advertising materials mentioning features or use of this software
-##    must display the following acknowledgement:
-##        This product includes software developed by Terrapin Communications,
-##        Inc. and its contributors for RANCID.
-## 4. Neither the name of Terrapin Communications, Inc. nor the names of its
+## 3. Neither the name of RANCID nor the names of its
 ##    contributors may be used to endorse or promote products derived from
 ##    this software without specific prior written permission.
-## 5. It is requested that non-binding fixes and modifications be contributed
-##    back to Terrapin Communications, Inc.
 ##
-## THIS SOFTWARE IS PROVIDED BY Terrapin Communications, INC. AND CONTRIBUTORS
+## THIS SOFTWARE IS PROVIDED BY Henry Kilmer, John Heasley AND CONTRIBUTORS
 ## ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 ## TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 ## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COMPANY OR CONTRIBUTORS
@@ -39,21 +31,35 @@
 ## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
+##
+## It is the request of the authors, but not a condition of license, that
+## parties packaging or redistributing RANCID NOT distribute altered versions
+## of the etc/rancid.types.base file nor alter how this file is processed nor
+## when in relation to etc/rancid.types.conf.  The goal of this is to help
+## suppress our support costs.  If it becomes a problem, this could become a
+## condition of license.
+# 
+#  The expect login scripts were based on Erik Sherk's gwtn, by permission.
+# 
+#  The original looking glass software was written by Ed Kern, provided by
+#  permission and modified beyond recognition.
 #
 # control_rancid $GROUP
 #
 
 # print a usage message to stderr
 pr_usage() {
-    echo "usage: $0 [-V] [-f group_config_file] [-r device_name] [-m mail rcpt] group" >&2;
+    echo "usage: $0 [-V] [-c commit_msg] [-f group_config_file] [-r device_name] [-m mail rcpt] group" >&2;
 }
 
 # command-line options
 # -V print version string
+# -c <SCM commit message>
 # -f <group config file name>
 # -m <mail recipients>
 # -r <device name>
 alt_mailrcpt=0
+alt_commitmsg=0
 if [ $# -ge 1 ] ; then
 
     while [ 1 ] ; do
@@ -61,6 +67,17 @@ if [ $# -ge 1 ] ; then
 	-V)
 	    echo "@PACKAGE@ @VERSION@"
 	    exit 0
+	    ;;
+	-c)
+	    shift
+	    # next arg is the commit message
+	    alt_commitmsg=1
+	    if [ -z "$commitmsg" ] ; then
+		commitmsg="$1"
+	    else
+		commitmsg="$commitmsg,$1"
+	    fi
+	    shift
 	    ;;
 	-f)
 	    shift
@@ -129,6 +146,11 @@ unset noclobber > /dev/null 2>&1
 
 # SENDMAIL location
 SENDMAIL=${SENDMAIL:=sendmail};
+# default MAILHEADERS
+set | grep MAILHEADERS= > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+    MAILHEADERS="Precedence: bulk\nAuto-submitted: auto-generated\nX-Auto-Response-Suppress: All"; export MAILHEADERS
+fi
 
 # Bail if we do not have the necessary info to run
 if [ ! -d $DIR ] ; then
@@ -161,9 +183,12 @@ fi
 mailrcpt=${mailrcpt:-"@MAILPLUS@${GROUP}${MAILDOMAIN}"}; export mailrcpt
 adminmailrcpt=${adminmailrcpt:-"@ADMINMAILPLUS@${GROUP}${MAILDOMAIN}"};
 export adminmailrcpt
-set | grep MAILHEADERS= > /dev/null 2>&1
-if [ $? -ne 0 ] ; then
-    MAILHEADERS="Precedence: bulk\nAuto-submitted: auto-generated\nX-Auto-Response-Suppress: All"; export MAILHEADERS
+if [ -z "$commitmsg" ] ; then
+    commitmsg="updates"
+    if [ $alt_mailrcpt -eq 1 ] ; then
+	commitmsg="$commitmsg - courtesy of $mailrcpt"
+    fi
+    export commitmsg
 fi
 
 # Number of things par should run in parallel.
@@ -317,8 +342,16 @@ fi
 cd $DIR
 trap 'rm -fr routers.db routers.all.new routers.down.new routers.up.new \
 	routers.mail routers.added routers.deleted $TMP;' 1 2 15
-sed -e '/^#/d' -e 's/^ *//' -e 's/ *$//' -e 's/ *; */;/g' router.db |
-	tr '[A-Z]' '[a-z]' | sort -u > routers.db
+@PERLV@ -ne '{s/^\s*//; s/\s*$//; s/\s*;\s*/;/g; next if (/^(#|;|$)/);
+    @F = split /\;/;
+    $F[2] =~ s/\s*\$//;
+    $F[0] =~ tr@A-Z@a-z@;
+    if (defined($A{$F[0]})) {
+      printf STDERR "WARNING: %s appears in routers.db multiple times\n", $F[0];
+      next;
+    } $A{$F[0]} = "$F[1];$F[2]";}
+    END { foreach $k (sort((keys(%A)))) {print "$k;$A{$k}\n";} }' \
+    router.db > routers.db
 cut -d\; -f1,2 routers.db > routers.all.new
 if [ ! -f routers.all ] ; then touch routers.all; fi
 @DIFF_CMD@ routers.all routers.all.new > /dev/null 2>&1; RALL=$?
@@ -469,7 +502,7 @@ for router in `cut -d\; -f1 ../routers.up` ; do
 	if [ ! -f $router ] ; then
 	    touch $router
 	fi
-	git status $router | grep '^?' > /dev/null 2>&1
+	git status --porcelain $router | grep '^?' > /dev/null 2>&1
 	if [ $? -eq 0 ] ; then
 	    git add $router
 	    git commit -m 'new router' $router
@@ -480,7 +513,7 @@ for router in `cut -d\; -f1 ../routers.up` ; do
 done
 echo
 # delete configs from RCS for routers not listed in routers.up.
-for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .svn -prune -o -name .cvsignore -prune -o -name .gitignore -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
+for router in `find . \( -name \*.new -prune -o -name CVS -prune -o -name .svn -prune -o -name .cvsignore -prune -o -name .gitignore -prune -o -name .old -prune \) -o -type f -print | sed -e 's/^.\///'` ; do
     grep -i "^$router\;" ../router.db > /dev/null 2>&1
     if [ $? -eq 1 ] ; then
 	rm -f $router
@@ -569,7 +602,7 @@ do
 	rm -f $DIR/routers.up.missed
 	round=`expr $round + 1`
     else
-	echo "All routers sucessfully completed."
+	echo "All routers successfully completed."
 	round=`expr $pass + 1`
     fi
 done
@@ -631,19 +664,14 @@ if [ $alt_mailrcpt -eq 1 ] ; then
 else
     subject="router config diffs"
 fi
+if [ $RCSSYS = git ] ; then
+    $RCSSYS commit -am "$commitmsg"
+else
+    $RCSSYS commit -m "$commitmsg"
+fi
 if [ "X$device" != "X" ] ; then
-    if [ $RCSSYS = git ] ; then
-	$RCSSYS commit -am "updates - courtesy of $mailrcpt"
-    else
-	$RCSSYS commit -m "updates - courtesy of $mailrcpt"
-    fi
     subject="$GROUP/$device $subject"
 else
-    if [ $RCSSYS = git ] ; then
-	$RCSSYS commit -am updates
-    else
-	$RCSSYS commit -m updates
-    fi
     subject="$GROUP $subject"
 fi
 
@@ -686,6 +714,10 @@ if [ -s $TMP.diff ] ; then
 	  echo "Subject: $subject"
 	  echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 	  echo ""
+	  if [ $alt_commitmsg -eq 1 ] ; then
+		echo "Commit message: $commitmsg"
+		echo ""
+	  fi
 	  cat $TMP.diff
 	) | $SENDMAIL -t $MAILOPTS
     else
@@ -713,6 +745,10 @@ if [ -s $TMP.diff ] ; then
 		fi
 		echo "$MAILHEADERS" | awk '{L = "";LN = $0;while (LN ~ /\\n/) { I = index(LN,"\\n");L = L substr(LN,0,I-1) "\n";LN = substr(LN,I+2,length(LN)-I-1);}print L LN;}'
 		echo ""
+		if [ $alt_commitmsg -eq 1 ] ; then
+		    echo "Commit message: $commitmsg"
+		    echo ""
+		fi
 		cat $file
 		) | $SENDMAIL -t $MAILOPTS
 		LASTIDS="$LASTIDS $MSGID"

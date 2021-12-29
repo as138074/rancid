@@ -1,7 +1,5 @@
 package edgerouter;
 ##
-## $Id: edgerouter.pm.in 3438 2016-07-25 22:35:11Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -92,6 +90,7 @@ sub ShowVersion {
 	last if (/^$prompt/);
 	next if (/^\s+\^$/);
         return(1) if (/invalid (input|command) detected/i);
+        return(-1) if (/^plat exception:/i);	# failure to connect?
 	next if /^\s*$/;
 
 	next if (/^(uptime|copyright):/i);

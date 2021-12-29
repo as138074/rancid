@@ -1,7 +1,5 @@
 package rbt;
 ##
-## $Id: rbt.pm.in 3226 2016-01-15 21:41:54Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

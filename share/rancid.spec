@@ -1,5 +1,5 @@
 Name:           rancid
-Version:        3.5
+Version:        3.10.99
 Release:        1%{?dist}
 Summary:        Really Awesome New Cisco confIg Differ
 
@@ -14,7 +14,7 @@ Requires:       findutils
 Requires:       expect >= 5.40
 Requires:       iputils
 Requires:       logrotate
-Requires:       openssh-client
+Requires:       openssh-clients
 Requires:       perl
 Requires:       postfix
 Requires:       telnet
@@ -94,8 +94,10 @@ rm -rf $RPM_BUILD_ROOT
 %config /etc/rancid.types.base
 %config(noreplace) /etc/rancid.types.conf
 %{_bindir}/*
+%{_libdir}/*
 %{_mandir}/man1/[a-k]*
 %{_mandir}/man1/[m-z]*
+%{_mandir}/man3/[m-z]*
 %{_mandir}/man5/[a-k]*
 %{_mandir}/man5/[m-z]*
 %dir %attr(770,rancid,rancid) %{_localstatedir}/rancid
@@ -104,7 +106,7 @@ rm -rf $RPM_BUILD_ROOT
 %files lg
 %defattr(-,root,root,0755)
 %config(noreplace) /etc/lg.conf
-%{_mandir}/man1/lg_intro*
+%{_mandir}/man7/lg_intro*
 %{_mandir}/man5/lg.conf*
 /var/www/cgi-bin/*
 %doc README.lg

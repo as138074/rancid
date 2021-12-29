@@ -1,13 +1,13 @@
 .\"
 .hys 50
-.TH "clogin" "1" "26 May 2016"
+.TH "clogin" "1" "5 May 2020"
 .SH NAME
 clogin \- Cisco login script
 .SH SYNOPSIS
 .B clogin
 [\fB\-autoenable\fP]
 [\fB\-noenable\fP]
-[\fB\-dhSV\fR]
+[\fB\-dhiSV\fR]
 [\fB\-m|M\fR]
 [\c
 .BI \-c\ 
@@ -52,42 +52,53 @@ router
 is an
 .BR expect (1)
 script to automate the process of logging into a Cisco router,
-Catalyst switch, Extreme switch, Juniper ERX/E-series, Procket Networks,
+Catalyst switch, Arista switch, Extreme switch, Juniper ERX/E-series,
 or Redback router.
 There are complementary scripts for
 A10,
 Alteon,
 Avocent (Cyclades),
 Bay Networks (nortel),
+Brocade,
+Cisco Small Business devices,
 ADC-kentrox EZ-T3 mux,
+Fortinet firewalls,
 Foundry,
+Cisco Firepower,
 HP Procurve switches and Cisco AGMs,
 Hitachi routers,
 Juniper Networks,
 MRV optical switch,
 Mikrotik routers,
 Netscreen firewalls,
+Nokia (Alcatel-Lucent),
 Netscaler,
+Riverbed Steelhead,
 Riverstone,
 Netopia,
 Cisco WLCs,
 Extreme devices
-and Xirrus arrays,
+and Xirrus arrays or Arrcus routers,
 named
-.B a10login
+.B a10login,
 .B alogin,
 .B avologin,
 .B blogin,
+.B brlogin,
+.B csblogin,
 .B elogin,
 .B flogin,
 .B fnlogin,
+.B fxlogin,
 .B hlogin,
 .B htlogin,
 .B jlogin,
 .B mrvlogin,
 .B mtlogin,
 .B nlogin,
+.B noklogin,
 .B nslogin,
+.B rblogin,
 .B rivlogin,
 .B tlogin,
 .B wlogin,
@@ -119,7 +130,7 @@ The command-line options are as follows:
 .TP
 .B \-S
 Save the configuration on exit, if the device prompts at logout time.
-This only has affect when used with -s.
+This only has affect when used with -c.
 .TP
 .B \-V
 Prints package name and version strings.
@@ -155,6 +166,10 @@ Specifies an alternate configuration file.  The default is
 .TP
 .B \-h
 Display usage line and exit.
+.\"
+.TP
+.B \-i
+Enter interactive mode after processing -[cx] options.
 .\"
 .TP
 .B \-[mM]
@@ -299,12 +314,6 @@ such as "router> (enable)".  It uses this to determine, for example,
 whether the command to disable the pager is "set length 0" or "term length 0".
 .PP
 The HP Procurve switches that are Foundry OEMs use flogin, not hlogin.
-.PP
-The Extreme is supported by
-.B clogin,
-but it has no concept of an "enabled" privilege level.  You must
-set autoenable for these devices in your
-.IR .cloginrc .
 .PP
 The -S option is a recent addition, it may not be supported in all of the
 login scripts or for every target device.

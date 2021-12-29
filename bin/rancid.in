@@ -1,7 +1,5 @@
 #! @PERLV_PATH@
 ##
-## $Id: rancid.in 3505 2016-11-20 04:45:26Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -28,7 +26,7 @@ our @ISA = qw(Exporter rancid);
 
 sub usage()
 {
-    print STDERR "rancid [-dhltCV] -t device_type [-f filename | hostname]\n";
+    print STDERR "rancid [-dhlCV] -t device_type [-f filename | hostname]\n";
     exit 64;
 }
 
@@ -45,6 +43,29 @@ if (loadtype($devtype)) {
 }
 if (! defined($lscript)) {
     die "login script not defined for device type $rancid::devtype\n";
+}
+# if the first word of $script is not us (this script), exec the given
+# script.
+my(@script) = split(/\s+/, $script);
+if (which($script[0]) ne which($0)) {
+    # -[hCV] are not handled; they will have already been handled earlier.
+    push(@script, "-d") if $opt_d;
+    push(@script, "-l") if $opt_l;
+    push(@script, "-f") if $opt_f;
+    push(@script, $host);
+    if ($debug) {
+	print(STDERR "device script ($script[0]) does not appear to be me ($0)".
+		     ": exec(".  join(" ", @script) .")\n");
+    }
+    # there is no way to prevent an error msg from exec such that the die error
+    # is the only one displayed, without also leaving the child without a
+    # working STDERR.
+    exec(join(" ", @script)) || die "exec($script[0]) failed: $!\n";
+}
+
+# check that inloop, the input/main loop, is defined
+if (!defined($inloop) || length($inloop) < 1) {
+    die "inloop is not configured for device type $devtype";
 }
 
 # open the temporary file for the digested output
@@ -69,25 +90,20 @@ if (length($#modules)) {
     }
 }
 
-# open the input, a pre-collected file or start a login for a login stream or
+# open the input; a pre-collected file or start a login for a login stream or
 # temporary file
 if ($file) {
     print(STDERR "opening file $host\n") if ($debug || $log);
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
-    print(STDERR "executing $lscript -t $timeo -c\"$commandstr\" $host\n") if ($debug || $log);
-    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "$lscript -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
-    } else {
-	open(INPUT,"$lscript -t $timeo -c \"$commandstr\" $host </dev/null |") || die "clogin failed for $host: $!\n";
-    }
+    my $cstr = $commandstr;
+    $cstr =~ s/\"/\\\"/g;
+    print(STDERR "executing $lscript -t $timeo -c\"$cstr\" $host\n") if ($debug || $log);
+    system "$lscript -t $timeo -c \"$cstr\" $host </dev/null > $host.raw 2>&1" || die "clogin failed for $host: $!\n";
+    open(INPUT, "< $host.raw") || die "clogin failed for $host: $!\n";
 }
 
 # loop over the input using the provided input/main loop
-if (!defined($inloop) || length($inloop) < 1) {
-    die "inloop is not configured for device type $devtype";
-}
 eval($inloop ."(*INPUT, *OUTPUT);") && die "${inloop} failed: $@\n";
 
 print STDOUT "Done $lscript: $_\n" if ($log);
@@ -97,9 +113,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-    unlink("$host.raw") if (! $debug);
-}
+unlink("$host.raw") if (! $debug);
 
 # check for completeness
 if (scalar(%commands) || !$clean_run || !$found_end) {
@@ -123,6 +137,10 @@ if (scalar(%commands) || !$clean_run || !$found_end) {
     }
     if (!$clean_run || !$found_end) {
 	print(STDERR "$host: End of run not found\n");
+	if ($debug) {
+	    print(STDERR "$host: clean_run is false\n") if (!$clean_run);
+	    print(STDERR "$host: found_end is false\n") if (!$found_end);
+	}
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

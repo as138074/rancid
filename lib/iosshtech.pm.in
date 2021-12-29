@@ -1,7 +1,5 @@
 package iosshtech;
 ##
-## $Id: iosshtech.pm.in 3485 2016-10-31 17:53:58Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #

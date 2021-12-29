@@ -1,9 +1,765 @@
+3.13
+	iosxr.pm: handle power shelves in eXR-lite
+
+	dnos10.pm: add command show inventory media - github.com/spike77453
+
+	dnos10.pm: filter fan speed for other fans on same tray -
+	github.com/spike77453
+
+	junos.pm: recognize error connecting to dead slave RE
+
+	rancid.types.base: add type ios-xr7 for Cisco XR >=7.0 on *some*
+	devices, such as NCS - Bill Owens
+
+	rancid.types.base: add axis type for axis.com switch - Troy Beisigl
+
+	smc.pm: filter module uptime on PowerConnect 5524
+
+	nxos.pm: filter fluctuating WWNs
+
+	arcos.pm: show features command no longer exposed in ~4.x
+
+	sros.pm: end of config marker disappeared ~20.5, to be fixed in 20.7r1.
+	Use the MD context marker as an alternative marker
+
+	jlogin: adjust code to set screen with for -s and -c
+
+	lg.cgi, lgform.cgi: fix missing variable inializations - Troy Boudreau
+
+	ios.pm: ASAv fails to read licensing debug info sometimes
+
+	lgform.cgi: ibcgi-pm-perl removed start/endform version 4.04 - Troy
+	Boudreau
+
+	mtrancid, routeros.pm: convert mikrotik to module
+
+	control_rancid: omit .old when looking for rogue files
+
+	a10login: regex lacking regex option - Tim Warnock
+
+	control_rancid: add --porcelain to git status for expected output -
+	github.com/jude
+
+	avocent.pm: fix prompt match, so filters will match the exit command,
+	which only occasionally has a leading space,
+
+	avocent.pm: # seems to be the ACS comment character, not !.  Collect
+	total memory from /proc/meminfo.  Comment output from some cat commands.
+
+	rancid.pm: return an error when a rancid.type.conf line has too few
+	fields
+
+	avorancid, avocent.pm: convert avocent to module
+
+	avologin: run_commands(): prompt match s.b. [#$], not [#>]
+
+	avologin: normalize to clogin
+
+	avologin: make default timeout longer, these are slow
+
+	ios.pm: show license could return an author failure - Majed Zouhairy
+
+	zrancid, frr.pm: convert zebra script to FRR perl library
+
+	wlogin: send_human the logout command
+
+	rancid.types.base: note AAA role needed for WLC - Charles Allen
+
+	rancid.pm: check that opt_t is defined before use
+
+	xilogin: arcos login banner match can fail if a motd-banner is set
+
+	mtrancid: filter dynamic configuration, such as fluctuating pppoe
+	user-specific config
+
+	ios.pm: filter flash dir license_evlog, receives debug logs on XE
+	>=17.2 - Reuben Farrelly
+
+	arbor.pm: add commands system file show, system show, system disk show
+
+	jerancid: remove more temperatures - Christian Rohmann via debian
+	package
+
+	man: Move rancid_intro(1) and lg_intro(1) to man section 7 - - Roland
+	Rosenfeld
+
+	misc: Add some documentation for a10login, brlogin, fxlogin, rblogin -
+	Roland Rosenfeld
+
+3.12
+	sros.pm: summarize flash free space
+
+	junos.pm: ShowSystemLicense(): missing variable initialization
+
+	exos.pm: ShowVersion(): improve parsing of h/w - James Andrewartha
+
+	ios.pm: do not use perl /n regex modifier; it didnt appear until 5.22
+	and is causing heartburn
+
+3.11
+	ios.pm: some IOS, possibly newer releases, report command authorization
+	failures in a different format - Majed
+
+	arcos.pm: ShowHardware(): drop indexer counts 
+
+	rancid.pm: loadtype(): check if script is defined before processing -C
+
+	ios.pm: filter lines from 'term exec prompt time' on IOS - Joe Clarke
+
+	junos.pm: ShowSystemLicense() must recognize some backend daemon
+	communication errors
+
+	rancid.types.base, iosxr.pm: collect show memory summary
+
+	iosxr.pm: ShowVersion(): parse eXR flavor
+
+	rancid.types.base: more eXR command clean-up
+
+	iosxr.pm: ShowLicense(): import filters from ios.pm for for eXR >=6.4;
+	guessing here that the filters will be the same since the format is the
+	same, but I have nothing to test against.
+
+	iosxr.pm: ShowRedundancy(): fix for XR >=5.4.3 & eXR >=6.4
+
+	iosxr.pm: ShowHWfpd(): remove trailing WS found in eXR
+
+	rancid.types.base: add ios-exr for IOS-EXR with alias cisco-exr and add
+	ios, ios-sb, ios-nx, ios-xr for the other cisco ios versions.
+
+	iosxr.pm: ShowInventory(): change commands for exr to make the output
+	the same.  Add ShowDiag() for exr equivalent of admin show diag
+
+	rancid.types.base: rename juniper -> junos.  Add alias for juniper
+
+	iosxr.pm: ShowInventory(): remove trailing WS found in eXR description
+
+	iosxr.pm: ShowInstallSummary(): add "Image:" prefix for consistency
+	with ShowInstallActive()
+
+	rancid-fe: recognize rancid.types.conf aliases
+
+	junos.pm: show chassis clocks is broken in 19.1R2.1-EVO on some
+	platforms.  remove the command for now.
+
+	edgemax.pm: filter fan speed/duty from o/s 1.9
+
+	foundry.pm: wrap secure MAC address if FILTER_OSC > YES
+
+	junos.pm: ShowChassisClocks() must recognize some backend daemon
+	communication errors
+
+	junos.pm: EVO RE DRAM fluctuates; replace with "installed" value
+
+	dnos10: add command show inventory
+
+	iosxr.pm: match old files where the 4-digit year replaces the timestamp
+
+	add device type junos-evo for JunOS EVO
+
+	panos.pm: ShowConfig(): missing last line of config - ermuller
+
+	ios.pm: ShowFlash(): file permissions field in catch-all branch must
+	also match directories
+
+	ios.pm: ShowFlash(): filter ASA fluctuating files in LOCAL-CA-SERVER/ -
+	Emille Blanc
+
+	dnos9.pm|force10: ShowVersion(): drop trailing WS - Howard Jones
+
+	blogin: normalize part of login() to clogin
+
+	*login: handle openssh fingerprint prompt for new keys - Emille Blanc
+
+	junos.pm: ShowChassisFirmware(): drop trail WS
+
+	ios.pm: remove file numbers from flash
+
+	rancid.pm: fix handling of script name when handling -C
+
+	ios.pm: processor type may be multiple words eg: AS920 - Emille Blanc
+
+	ios.pm: dot1x state match must be case-insensitive - Bart Bylemans
+
+	iosxr.pm: filter .sspdc file sz/ts
+
+	iosxr.pm: filter volt_hist file sz/ts
+
+	sros.pm: improve power data filters
+
+3.10
+	rancid.types.base: cisco eXR does not have admin show install summary;
+	use admin show install active instead, which appears to be the same at
+	least as far back as 5.3.4.
+
+	rancid, rancid.pm: handle non-modulized rancid scripts in the rancid
+	script by exec()ing the real script
+
+	dnos10.om: start Dell NOS10 module - Bjørn Skobba
+
+	smc.pm: filter Dell N1148T-ON and Powerconnect 7048 temperature info
+
+	smc.pm: inloop() must set clean_run
+
+	smc.pm: replaces srancid; modularization.
+
+	ios.pm: collect show dot1x; if dot1x auth is enabled and
+	rancid.conf:FILTER_OSC = ALL, filter show vlan, which otherwise change
+	frequently
+
+	exos.pm: rancid.types.base: collect show policy detail
+
+	dnos9.pm: replaces f10rancid; modularization.  force10 is now an alias.
+
+	rancid.types.base: add alias direction - see manpage
+
+	rancid.pm: ensure device type is lowercase
+
+	ios.pm: DirFlash(): fix sort field & DirSlotN(): match ASA's unique
+	date format
+
+	hlogin: add variation of user prompt from Dell PowerConnect M8024-k as
+	type 'smc'.
+
+	iosxr.pm: match diskN, where N may be >1 in XR 6.x on 9k with a usbdrive
+
+	arcos.pm: fail on cli to application error
+
+	rancid-run: wrong variable used in OLDTIME comparison - Adrian Hardy
+
+	f10rancid: drop version/last config/startup-config comments from config
+	- Florin Vlad Olariu
+
+	fss2.pm: drop cpu stats and process stats from FSS >=2.5.1
+
+	iosxr.pm: DirSlotN(): drop the file number from all files.
+
+	Missing Arista documentation - github.com/inphobia
+
+	GC "procket" from manpages & README
+
+	arcos.pm: drop trailing spaces
+
+	jlogin: handle change in Fujitsu FSS2 telnet prompt
+
+	rivlogin: remove some debug output
+
+	*login: fix password decision when -e or -p are used, and make error msg
+	common - report from Pan Affa
+
+	ios.pm: add showPlatform() filter for show hw-programmable all
+
+	flogin: handle config-mode prompts in run_command()
+
+	ios.pm: drop count status from show license summary
+
+	hrancid: filter rogue diagnostic output from 3rd-party transceivers in
+	Aruba - Huber Florian Tobias
+
+	remove manpages, etc of rancid scripts converted to modules - Roland
+	Rosenfel
+
+	Deprecate rancid.conf:NOPIPE; default is now enabled
+
+	prancid: deprecated
+
+	arcos.pm rancid.types.base: change show hardware handling to eliminate
+	fluctuation in formatting and output
+
+	junos.pm: filter SRX cluster RE/LC names in prompts - Charles R Anderson
+
+	junos.pm: filter negative chassis temps - Charles R Anderson
+
+	wavesvros.pm: filter alternate form of user password - Charles R
+	Anderson
+
+	panos.pm: filter SNMP community strings & protocol encryption keys &
+	correct comment character - Charles R Anderson
+
+	rancid: escape "s in rancid.types command definitions - Charles R
+	Anderson
+
+	ios.pm: filter some log files on ASA 9.8 / FTD2100s - Erik Muller
+
+	various documentation updates/corrections - Nick Nauwelaerts
+
+3.9
+	ios.pm: add show module switch for 6500 vss data - Per-Olof Olsson
+
+	arcos.pm: add tacacs key filter
+
+	arcos.pm: fix prompt handling - WIP
+
+	noklogin: exit if pager disable command is not permitted
+
+	xilogin: handle pager disable for arcos
+
+	junos.pm: add ShowSystemConfDB()
+
+	sros.pm: ignore Error: Bad command. error msg form older sros devices
+
+	ciscowlc.pm: filter mgig temperature - Erik Muller
+
+	anlogin: make the pty allocation the same as in jlogin
+
+	dell.pm: powerconnect N[234]000 do not reliably echo the <CR> after
+	exit - Wayne Eisenberg
+
+	clogin: new variation of username prompt - Wayne Eisenberg
+
+	wlogin: fix prompt match in run_commands() which was failing for longer
+	hostnames/prompts - Erik Muller
+
+	bigip: add "cd /" command for v13 to collect all routes - Wouter de Jong
+
+	nxos.pm: recognize older SAN nexus devices - Wouter de Jong
+
+	a10login: handle logout prompt variation for older ACOS - Wouter de Jong
+
+	junos.pm: handle show chassis firmware bug for 11.x on EX - Wouter de
+	Jong
+
+	panos.pm: ignore show chassis inventory on invalid syntax
+
+	sros.pm: remove duplication of chassis type - Greg Hankins
+
+	sros.pm: restore chassis type line - Greg Hankins
+
+	panos.pm: add show chassis inventory - Erik Muller
+
+	nxos.pm: filter bcm_mem_lock_trace.log since ~7.0.3 - Erik Muller
+
+	hlogin: send \r rather than <sp> for "Press any key to continue" to
+	work-around apparant bug - Benoit Dolez
+
+	panlogin: move scripting mode and pager disabling from command list to
+	panlogin to work-around complete-on-space {mis-}feature added around
+	8.1.4 - Erik Muller
+
+	sros.pm: restore chassis type from bootlog.txt
+
+	clogin: fix problem with catos prompt
+
+	sros.pm: take chassis s/n from bootlog.txt
+
+	*login: adjust the command separated used within; tcl <8.6 does not
+	recognize u002 and u0002 as the same value, which caused a regex
+	compilation failure
+
+	clogin: ArubaOS >~8.3 has a '*' which must be escaped in prompt
+	matching -PJ Goodwin
+
+	*login: backout send-human change in previous commit, where it wasnt
+	before.  W/O an appropriate adjustment of the send-human variables,
+	it was killing performance.
+
+	*login: address bug in escaping empty commands of -[cx]
+
+	sros.pm: use file type debug command only for total memory and card type
+
+	panlogin: copy/customize last/failed login match from clogin
+
+	fnlogin: accept new banner prompt at login - Ni Ne
+
+	ciscowlc.pm: the device may not echo the \r\n at logout
+
+	fss2: filter sys-uptime
+
+	anlogin, jlogin, noklogin: use spawnopts spawning ssh/telnet
+
+	nxos.pm: GC unused variables
+
+	fortigate: rename fortigate device type to fortigate-full and re-create
+	the fortigate type with 'show' (not 'full-configuration')
+
+	anlogin: use login_top
+
+	sros.pm: take chassis type and s/n from show chassis instead of boot.log
+
+	noklogin: remove ^H handling; its consuming too much
+
+	arbor.pm: increase anlogin timeout for slow cli commands
+
+	noklogin: allocate a pty if not on a tty & set term width
+
+	iosxr: DirSlotN(): drop fileno from oscillating files to ignore the
+	rotation by renaming behavior seen with ce_switch.log and sort all
+	files by filename
+
+	iosxr: also ignore ce_switch.log*
+
+	*login: add -i option
+
+	arcos.pm: initial arcos support - WIP
+
+	anlogin: copy last/failed login match from clogin
+
+	nxos.pm: also ignore accounting_log.0 - Pavel Korovin
+
+	srancid: prevent ShowSys() power supply handling from consuming too much
+
+	fortigate: filter INDUSTRIAL-DB version - Chris Wopat
+
+	nxos.pm: filter out oscillating data from transceivers - Pavel Korovin
+
+	fortigate: wrap other DB signatures within FILTER_OSC
+
+	hlogin: allow prompts with ()s, still not a good idea imo
+
+	fxlogin: missing escape in regex - Erik Muller
+
+	wavesvros.pm: add cmds license file list, blade show, & alarm show
+
+	fortigate.pm: GC unnecessary output spacers & fix comment character -
+	Nick Nauwelaerts
+
+	fnlogin: fix logout sequence in run_commands() & used -h option of send
+
+	fnrancid, fortigate.pm: convert fortigate to module
+
+	waverserver.pm: filter power support wattage, new in waveserveros 1.6
+
+	nxos.pm: in ShowEnvTemp() sub-input loop, catch prompt - Scott McInness
+
+	jlogin: skip login tips that look like prompts, like:
+	JUNOS tip:
+	Use the configuration statement [system login class <name> login-tip]
+
+	rancid.conf.sample: note ALL option FILTER_OSC
+
+	fnrancid: filter db version stamps wrapped in FILTER_OSC - Chris Wopat
+
+	ulogin: parse (ignore) last (failed) login message at login time
+
+3.8
+	nxos.pm: ShowEnv() missing prompt handling & CR filter - Frank Mogaddedi
+
+	ios.pm, iosxr.pm: re-organize the DirSlotN() filtering a bit toward
+	reducing fluctuations
+
+	sros.pm: misc cleanup - Greg Hankins
+
+	sros.pm: make last config saved/modified info filtering dependent on
+	FILTER_OSC=ALL
+
+	ios.pm: ShowFlast(): sort by file name
+
+	noklogin: disable pager in classic cli, from MD cli
+
+	sros.pm: add non-native commands for MD cli
+
+	sros.pm: separate WriteTermMD() for MD cli
+
+	rancid.types.base: add sros-md type (wip)
+
+	noklogin: disable pager in MD cli
+
+	sros.pm: ignore "Error: Invalid parameter" error from MD cli
+
+	ios.pm: DirSlotN(): sort by filename
+
+	ios.pm: DirSlotN(): roll XE-specific filter into the generic and drop
+	the file number from all files.
+
+	ios.pm: DirSlotN(): drop XR-specific filter
+
+	ciscowlc: skip new oscillating o/p for WLC 8.8 - Reuden Farrelly
+
+	ciscowlc: fix logout match, like ASA, it missed the CR sometimes
+
+	fxlogin, fxos: initial FX-OS support - thanks Erik Muller
+
+	sros: filter change since last save line
+
+	clogin: add clause to recognize F5 >=11 "exit" command error msg
+
+	rancid.type.base: add bigip13 for >=13.x -  Howard Jones
+
+	control_rancid: @sysconfdir@ not fully expanded
+
+	rancid.type.base: remove dir command from edgemax, no useful data and
+	produces endless diffs - Reuben Farrelly & Clemens Shrimpe
+
+	nxos.pm: use diskszsummary() for disk space
+
+	rancid.pm: add bytes2human(), diskszsummary(), human2bytes()
+
+	junos.pm: adjust match for backup RE communication failure.
+
+	ios.pm: filter date/size of underlying-config file
+
+	fnlogin: handle empty command index in run_commands()
+
+	fnlogin: fix escaping of '$' in full prompt matching
+
+	iosxr.pm: filter date/size of cisco_support file
+
+	ios.pm: match WIC/VIC/HWIC slots - Rybakov Evgeny
+
+	vrp.pm: drop file number in filesystem filters
+
+	vrp.pm: add filesystem filters
+
+	vrp.pm: add Hauwei VRP support - very much alpha quality ATM
+
+	xilogin: few change to support Hauwei VRP
+
+	clogin: new info in ASA login sequence matched as login prompt
+
+	nxos.pm: add show interface transceiver
+
+	mrv.pm: add show inventory
+
+	ios.pm: filter new "% free" string from dir slot in new ASA code
+
+	hrancid: filter timestamp bug in show tech transceivers
+
+	nxos.pm: filter show redundancy/show env fex when unsupported
+
+	iosxr.pm: filter .python-history flash file & non-existent paths/devs
+
+	ulogin: trim match of "last login:" for timing reasons
+
+	nx.pm: filter debug_logs/ in flash output - Charles T. Brooks
+
+	rancid.conf:  add check for docker environment where the root user check
+	is skipped.  this allows rancid.conf to be sourced inside a dcoker build
+	environment.
+
+	clogin: add tty settings when a real tty doesnt exist; hoping this will
+	help with the long command problem on ASA devices that I have not been
+	able to replicate on ASAs I can access
+
+	rancid.conf.sample: move UID check after setting PATH
+
+	aeos.pm: handle new power supply output format
+
+	fss2.pm, et al: add Fujitsu FSS2/1finity support
+
+	ulogin: fix regex typo for skipping last login msg in login sequence
+
+	srancid: filter power rates and tmestamps from 7024 power supply info
+
+	ciscowlc.pm: handle variant of logout bug
+
+	fnrancid: update md5-keys filter for Fortigate 5.4.6
+
+	sros.pm: move show chassis power-supply o/p - Greg Hankins
+
+	ciscowlc.pm: filter rogue client Unknowns - Bill Fenner
+
+	junos.pm: filter scale-subscriber license counters
+
+	ulogin: increase default timeout to 30s for slower Edgeroute Lite -
+	Andreas Herrmann
+
+3.7
+	sros.pm: fix prompt match to correctly handle the prompt with a modified
+	config & remove the atom from the output
+
+	arbor.pm: fail on intermittent h/w retrieval failure
+
+	iosxr.pm: recognize another possible intermittent failure in show
+	install active
+
+	fnrancid: filter cluster uptime
+
+	waveserver.pm: adjust prompt for the case where a ^ appears in the
+	prompt after displaying the config.
+
+	waveserver.pm: prompt could be # or >, depending on access level -
+	Chris Wopat tested
+
+	fnlogin.in: Fortiweb 5.8 changed password prompt
+
+	acos.pm: show aflex is not be supported in the CGN/LSN image
+
+	wlogin: support -S
+
+	wlogin: use login_top & GC the code to enable - tested by Reuben
+	Farrelly
+
+	ciscowlc.pm: filter bogus & oscillating mgmt address disaplay - Reuben
+	Farrelly
+
+	wlogin: GC some stuff from clogin, disable pager & fix the prompt regex
+
+	anlogin: disable pager on arbor
+
+	wlogin: fix use of exitval
+
+	rancid.pm, rancid.types.base: add timeout directive to set a default
+	login timeout.  Move timeouts from the modules to rancid.types.
+
+	rancid.types.base: argument missing for cisco-wlc8 - Reuben Farrelly
+
+	iosxr.pm: fail if install director is not up or ready
+
+	ios.pm: report physical memory for XE devices
+
+	ios.pm: filter config archive file names running-config-archive-*; no
+	reasonable file name suggestion found in docs.
+
+	aeos.pm: filter unsaved config changes notification
+
+	ios.pm: ignore size of throughput_monitor_params on XE - Emille Blanc
+
+	rancid.types.base, ios.pm: add 'show inventory' w/o raw argument for
+	ASA/PIX
+
+	arbor.pm: filter cmosh timer error that is intermitent and does appear
+	to affect collection
+
+	hpuifilter: fix an error in patch import in r3233: hpuifilter: fix
+	escape sequence parsing so that it does not consume sequences after
+	another that are incomplete - Brian Candler
+
+	rancid.types.base: add cisco-wlc8 with longer default timeout
+
+	ciscowlc.pm: remove noisy debugging o/p
+
+	srancid: add username/enable password filtering
+
+	nxos.pm: adjust regex for nexus with decimal wattages - Howard Jones
+
+	fnlogin: fix full prompt gleaning code - much appreciated help from
+	Merijn Evertse
+
+	fnrancid: filter oscillating ospf md5 keys - Merijn Evertse
+
+	sros.pm: final formatting tweaks - Greg Hankins
+
+	sros.pm: power info changes for 7750/7950 - Greg Hankins
+
+	control_rancid: check for duplicated device names in the router.db of
+	the active group.  print a warning and drop the dumplicate.
+	http://www.shrubbery.net/pipermail/rancid-discuss/2017-June/009661.html
+
+	hlogin: recognize username prompt User Name:
+
+	mtrancid: remove license renewal timestamp
+
+	junos.pm: filter cycling & useless last commit config line
+
+	hlogin: prompt matching not needed for interactive - Per-Olof Olsson
+
+	nxos.pm: drop bootvar_debug.* log files reported on the ML
+
+	hpuifilter: add 3 CR replacements, fixing hp5412 J8697A or hp5406 and
+	HP/Aruab-2920 switches running WB_16_03_0004 - Kalani Sanders
+
+	arbor.pm: force a terminal type so as not to confuse the PoS with
+	"network."  Seems that it might also support "dumb".
+
+	clogin: respond to prompt from config:file prompt noisy
+
+	ios.pm: Filter perpetually changing file "snooping" - Mark Felder
+
+	nxof.pm: Filter vtp_debug.log and vtp_debug_old.log CDETS bug CSCuy87611
+	- Mark Felder
+
+	aeos.pm: skip some junk in the config output
+
+	ios.pm: fail if show license can not retrieve license info
+
+	ios.pm: filter ASR901 fan speed - Nick Peelman
+
+	ios.pm: ShowDiag misinterprets WIC/VIC/HWIC slots - Rybakov Evgeny
+
+	*login: add cloginrc telnetcmd directive and with the defualt telnet -K
+	(no automatic login) if -K is supported, which otherwise can break
+	logins if the unix username and device username are not the same.
+
+	dllogin, hlogin, mrvlogin, nslogin, panlogin: include common functions
+	and cmd-line opts from login_top
+
+	rivlogin: normalize this a bit; its still a mess
+
+	junos.pm: ShowVersion: fail on no route to secondary RE
+
+	ios.pm: ShowDiag misinterprets PVDM slots - Rybakov Evgeny
+
+	junos.pm: add VMX-SCALE & VMX-BANDWIDTH to license filter - Brad
+	Dreisbach
+
+	rancid.spec: fix omissions & typo - Brad Dreisbach
+
+	configure: fix --with-git
+
+	fnlogin: do not send \r to the prompt in run_commands() - Daniel Fussell
+
+	fnlogin: fix missing/extra brace - Daniel Fussell
+
+	edgerouter.pm: add match for transient show version command failure
+
+	ios.pm: summarize bytes free on flash
+
+	noklogin: SR OS has no concept of enable mode; remove such code so that
+	autoenable/etc are not needed
+
+	sros.pm: add show card detail - Erik Muller
+
+	ios.pm: filter flash:smart-log/agentlog, debug file turd that changes
+	size in perpetuity
+
+	sros.pm: filter passwords & trap communities - Erik Muller
+
+	ios.pm: ASAv 9.6(2) has a bug with a cycling debug file:
+	smart-log/agentlog
+
+	*rancid: print which of found_end or clean_run are false with -d option
+
+	plogin: fix cmd-line option spec - Erik Muller
+
+	f10rancid: remove s4048 PS fan speed
+
+	f10rancid: WS after filenames in some versions cause the dir and
+	parent dir filters to fail.
+
+	fnrancid: filter last-login - Merijn Evertse
+
+	sros.pm: drop unnecessary command: file type config.dbg - Greg Hankins
+
+	alogin: respond to modified config saving & peer syncing appropriately -
+	thanks Bob Franzke
+
+	alogin: missing global variable
+
+	sros.pm: config.dbg doesnt exist w/o a saved debug config, ignore errors
+
+	ios.pm: remove fan speed from fan status on ASR901 - Emille Blanc
+
+	cloginrc.5: make note of special-character escaping precise - Lee
+
+	timeos -> sros & allogin -> noklogin, at the request of nokia
+
+	nxos.pm: pull snmp trap host filtering from ios.pm - Brandon Ewing
+
+	rancid-run, control_rancid: add -c option to specify a SCM commit
+	message - Mischa Diehm
+
+	rancid.pm, junos.pm: add ALL option to FILTER_OSC and apply this to
+	junos license info summarization and summarize more of the feature
+	license info - Erik Muller et al
+
+	junos.pm: also summarize dynamic-vpn licenses & use a blank percentage
+	for features with < 100 licenses - Erik Muller
+
+	iossb.pm: Cisco small business rancid module
+
+	hlogin: do not use hpuifilter for interactive telnet with non-std port
+
+	csblogin: start Cisco small business device support
+
+	complogin, eos.pm: Compass EOS support removed.  RiP
+
+	allogin, timos.pm: TiMOS support
+
 3.6.2
 	Fix etc/Makefile for rancid.types.conf handling.
 
 3.6.1
 	ios.pm: filter license registration timestamp
- 
+
 	fnrancid: filter oscillating md5-keys
 
 	par.c: fix misplaced pointer deref
@@ -65,7 +821,7 @@
 
 	ios.pm: evaluation license periods are displayed differently
 
-	lg: Add show interface optics 
+	lg: Add show interface optics
 
 	iosxr.pm: More useless FPD messages
 
@@ -423,7 +1179,7 @@
 
 	rancid-cvs: change git push.default to current - Per Carlson
 
-	add .old to configs/{.cvsignore,.gitignore}; see control_rancid.1
+	add .old to configs/{.cvsignore,.gitignore}; see control_rancid(1)
 
 	rancid.pm: rework IP address sorting based on patch from Nick Hilliard
 
@@ -1177,7 +1933,7 @@
 
 	rancid: summarize bytes free for IOS-XE like XR
 
-	nsrancid/nslogin: updates for netscalar version 8 - Marco Schirrmeister
+	nsrancid/nslogin: updates for netscaler version 8 - Marco Schirrmeister
 
 	f10rancid: updated support for all devices running FTOS: E-Series,
 	C-Series and S-Series - Greg Hankins

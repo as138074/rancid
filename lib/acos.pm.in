@@ -1,7 +1,5 @@
 package acos;
 ##
-## $Id: acos.pm.in 3507 2016-11-21 17:45:46Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -22,8 +20,6 @@ use rancid @VERSION@;
 
 # load-time initialization
 sub import {
-    $timeo = 90;
-
     0;
 }
 
@@ -133,6 +129,7 @@ sub ShowAflex {
 	tr/\015//d;
 	next if /^\s*$/;
 	last if (/^$prompt/);
+	return(1) if (/% unrecognized command\./i);	# not in CGN/LSN image
 
 	s/\s*$/\n/;					# trim trailing WS
         ProcessHistory("AFLEX", "", "", "!AFLEX: $_");

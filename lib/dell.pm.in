@@ -1,7 +1,5 @@
 package dell;
 ##
-## $Id: dell.pm.in 3226 2016-01-15 21:41:54Z heas $
-##
 ## fnrancid patched to dlrancid to accomplish D-Link support
 ## adapted by: Gavin McCullagh <gmccullagh at gmail.com>
 ##             Griffith College Dublin
@@ -40,9 +38,6 @@ our $found_version;
 
 # load-time initialization
 sub import {
-    $timeo = 300;		# dllogin timeout in seconds (some of these
-				# devices are remarkably slow to read config)
-
     0;
 }
 
@@ -65,7 +60,7 @@ sub inloop {
 TOP: while(<$INPUT>) {
 	tr/\015//d;
 	# XXX this match is not correct for DELL
-	if (/[>#]\s?exit$/) {
+	if (/[>#]\s?exit(?:$|Connection)/) {
 	    $clean_run = 1;
 	    last;
 	}

@@ -1,7 +1,5 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: clogin.in 3519 2016-12-01 00:23:58Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -26,7 +24,7 @@ set send_human {.2 .1 .4 .2 1}
 # returns: 0 on success, 1 on failure, -1 if rsh was used successfully
 proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile } {
     global command spawn_id in_proc do_command do_script platform passphrase
-    global prompt prompt_match u_prompt p_prompt e_prompt sshcmd
+    global prompt prompt_match u_prompt p_prompt e_prompt sshcmd telnetcmd
     set in_proc 1
     set uprompt_seen 0
 
@@ -37,9 +35,9 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog methcmd suffix port
 	    if {"$port" == ""} {
-		set retval [catch {spawn telnet $router} reason]
+		set retval [catch {eval spawn [split "$telnetcmd $router"]} reason]
 	    } else {
-		set retval [catch {spawn telnet $router $port} reason]
+		set retval [catch {eval spawn [split "$telnetcmd $router $port"]} reason]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
@@ -76,11 +74,12 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	    }
 
 	    # handle escaped ;s in commands, and ;; and ^;
-	    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
-	    regsub {^;} $esccommand "\u002;" command
-	    set sep "\\1\u001"
-	    regsub -all {([^\\])\;} $command "$sep" esccommand
-	    set sep "\u001"
+	    regsub -all {([^\\]);} $command "\\1\u0002;" esccommand
+	    regsub -all {([^\\]);;} $esccommand "\\1;\u0002;" command
+	    regsub {^;} $command "\u0002;" esccommand
+	    regsub -all {[\\];} $esccommand ";" command
+	    regsub -all {\u0002;} $command "\u0002" esccommand
+	    set sep "\u0002;"
 	    set commands [split $esccommand $sep]
 	    set num_commands [llength $commands]
 	    set rshfail 0
@@ -215,7 +214,8 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	}
 	-re "(Host key not found |The authenticity of host .* be established)" {
 	    expect {
-		-re "\\(yes\/no\\)\\?"	{ send "yes\r";
+		-re "\\(yes\/no\[^\\)]*\\)\\?" {
+					  send "yes\r";
 					  send_user "\nHost $router added to the list of known hosts.\n"
 					 }
 		-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
@@ -248,6 +248,12 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 				  send_user "\nError: Check your passwd for $router\n"
 				  catch {close}; catch {wait}; return 1
 				}
+	-nocase -re "last login:"	{
+				  exp_continue
+				}
+	-nocase -re "failed login:"	{
+				  exp_continue
+				}
 	"Login failed"		{
 				  send_user "\nError: Check your passwd for $router\n"
 				  catch {close}; catch {wait}; return 1
@@ -265,9 +271,6 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 				  # Catalyst 1900s have some lame menu.  Enter
 				  # K to reach a command-line.
 				  send "K\r"
-				  exp_continue
-				}
-	-re "Last login:"	{
 				  exp_continue
 				}
 	-re "Press the <tab> key \[^\r\n]+\[\r\n]+"	{
@@ -317,7 +320,7 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 
 # Enable
 proc do_enable { enauser enapasswd } {
-    global do_saveconfig in_proc
+    global in_proc
     global prompt u_prompt e_prompt enacmd
     set in_proc 1
 
@@ -353,13 +356,17 @@ proc do_enable { enauser enapasswd } {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global do_saveconfig in_proc platform
+    global do_interact do_saveconfig in_proc platform
     set in_proc 1
 
     if { [string compare "extreme" "$platform"] } {
-	# match cisco config mode prompts too, such as router(config-if)#,
-	# but catalyst does not change in this fashion.
-	regsub -lineanchor -- {^(.{1,11}).*([#>])$} $prompt {\1} reprompt
+	# match cisco config mode prompts too, such as router(config-if)#
+	# and truncatedr(config-if)#.
+	# catalyst does not change in this fashion, but does have its
+	# abnormal format, router> (enable).
+	# first, drop the "> (enable) " from the catos prompt.
+	regsub -lineanchor -- {> *\\\(enable\\\) *} $prompt {} reprompt
+	regsub -lineanchor -- {^(.{1,11}).*([#>])$} $reprompt {\1} reprompt
 	regsub -all -- {[\\]$} $reprompt {} reprompt
 	append reprompt {([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?}
     } else {
@@ -370,24 +377,21 @@ proc run_commands { prompt command } {
     log_user 0
 
     # handle escaped ;s in commands, and ;; and ^;
-    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
-    regsub {^;} $esccommand "\u002;" command
-    set sep "\\1\u001"
-    regsub -all {([^\\])\;} $command "$sep" esccommand
-    set sep "\u001"
+    regsub -all {([^\\]);} $command "\\1\u0002;" esccommand
+    regsub -all {([^\\]);;} $esccommand "\\1;\u0002;" command
+    regsub {^;} $command "\u0002;" esccommand
+    regsub -all {[\\];} $esccommand ";" command
+    regsub -all {\u0002;} $command "\u0002" esccommand
+    set sep "\u0002"
     set commands [split $esccommand $sep]
     set num_commands [llength $commands]
     # the pager can not be turned off on the PIX, so we have to look
     # for the "More" prompt.  the extreme is equally obnoxious in pre-12.3 XOS,
     # with a global switch in the config.
     for {set i 0} {$i < $num_commands} { incr i} {
-	if { [lindex $commands $i] == "\u002" } {
-	    send -- "\r"
-	} else {
-	    send -- "[subst -nocommands [lindex $commands $i]]\r"
-	}
+	send -- "[subst -nocommands [lindex $commands $i]]\r"
 	expect {
-	    -re "\b+"				{ exp_continue }
+	    -re "^\b+"				{ exp_continue }
 	    -re "^\[^\n\r *]*$reprompt"		{ send_user -- "$expect_out(buffer)"
 						}
 	    -re "^\[^\n\r]*$reprompt."		{ send_user -- "$expect_out(buffer)"
@@ -398,6 +402,11 @@ proc run_commands { prompt command } {
 						  exp_continue
 						}
 	    -re "\[^\r\n]*\[\n\r]+"		{ send_user -- "$expect_out(buffer)"
+						  exp_continue
+						}
+	    # respond to prompt from "file prompt noisy" config
+	    -nocase -re "^display filename \\\[\[^]]*]\\?" 	{
+						  send "\r"
 						  exp_continue
 						}
 	    -re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{
@@ -419,6 +428,11 @@ proc run_commands { prompt command } {
     }
     log_user 1
 
+    if { $do_interact == 1 } {
+	interact
+	return 0
+    }
+
     if { [string compare "extreme" "$platform"] } {
 	send -h "exit\r"
     } else {
@@ -430,6 +444,11 @@ proc run_commands { prompt command } {
 						  # return to non-enabled mode
 						  # on exit in enabled mode.
 						  send -h "exit\r"
+						  exp_continue;
+						}
+	-re "^\[^\n\r *]*Use .quit. to end"	{
+						  # the F5 >=11 uses quit
+						  send -h "quit\r"
 						  exp_continue;
 						}
 	"The system has unsaved changes"	{ # Force10 SFTOS
@@ -481,6 +500,14 @@ source_password_file $password_file
 set in_proc 0
 set exitval 0
 set prompt_match ""
+# if we have dont have a tty, we need some additional terminal settings
+if [catch {open /dev/tty w} ttyid] {
+    # no tty, ie: cron
+    set spawnopts "-nottycopy"
+    set stty_init "cols 132"
+} else {
+    catch {close ttyid} reason
+}
 foreach router [lrange $argv $i end] {
     set router [string tolower $router]
     # attempt at platform switching.
@@ -520,17 +547,25 @@ foreach router [lrange $argv $i end] {
 
     # Figure out passwords
     if { $do_passwd || $do_enapasswd } {
-      set pswd [find password $router]
-      if { [llength $pswd] == 0 } {
-	send_user -- "\nError: no password for $router in $password_file.\n"
-	continue
-      }
-      if { $enable && $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
-	send_user -- "\nError: no enable password for $router in $password_file.\n"
-	continue
-      }
-      set passwd [join [lindex $pswd 0] ""]
-      set enapasswd [join [lindex $pswd 1] ""]
+	set pswd [find password $router]
+	if { [llength $pswd] == 0 } {
+	    send_user -- "\nError: no password for $router in $password_file.\n"
+	    continue
+	}
+	if { $enable && $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
+	    send_user -- "\nError: no enable password for $router in $password_file.\n"
+	    continue
+	}
+	if { $do_passwd } {
+	    set passwd [join [lindex $pswd 0] ""]
+	} else {
+	    set passwd $userpasswd
+	}
+	if { $do_enapasswd } {
+	    set enapasswd [join [lindex $pswd 1] ""]
+	} else {
+	    set enapasswd $enapasswd
+	}
     } else {
 	set passwd $userpasswd
 	set enapasswd $enapasswd
@@ -570,7 +605,7 @@ foreach router [lrange $argv $i end] {
     # Figure out prompts
     set u_prompt [find userprompt $router]
     if { "$u_prompt" == "" } {
-	set u_prompt "(\[Uu]sername|Login|login|user name|User):"
+	set u_prompt "(\[Uu]sername|\[Ll]ogin|\[Uu]ser \[Nn]ame|User):"
     } else {
 	set u_prompt [join [lindex $u_prompt 0] ""]
     }
@@ -616,6 +651,10 @@ foreach router [lrange $argv $i end] {
     set sshcmd [join [lindex [find sshcmd $router] 0] ""]
     if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
+    # Figure out the telnet executable name
+    set telnetcmd [join [lindex [find telnetcmd $router] 0] ""]
+    if { "$telnetcmd" == "" } { set telnetcmd "@TELNET_CMD@" }
+
     # if [-mM], skip do not login
     if { $do_cloginrcdbg > 0 } { continue; }
 
@@ -653,13 +692,13 @@ foreach router [lrange $argv $i end] {
 				  set platform "extreme"
 				}
 	-re "^.+$reprompt"	{ set junk $expect_out(0,string);
-				  regsub -all "\[\]\[\(\)+]" $junk {\\&} prompt;
+				  regsub -all "\[\]\[\(\)\*+]" $junk {\\&} prompt;
 				}
     }
     if { $do_command || $do_script } {
 	if { [string compare "extreme" "$platform"] } {
-	    # If the prompt is (enable), then we are on a switch and the
-	    # command is "set length 0"; otherwise its "terminal length 0".
+	    # If the prompt is (enable), then we are on a cataylyst switch and
+	    # the command is "set length 0"; otherwise its "terminal length 0".
 	    if [regexp -- ".*> .*enable" "$prompt"] {
 		send "set length 0\r"
 		expect -re $prompt  	{}

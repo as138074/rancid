@@ -1,7 +1,5 @@
 #! @PERLV_PATH@
 ##
-## $Id: hrancid.in 3505 2016-11-20 04:45:26Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -19,6 +17,7 @@ no warnings 'uninitialized';
 use Exporter;
 use Getopt::Std;
 our($opt_d, $opt_f, $opt_h, $opt_l, $opt_t, $opt_C, $opt_V);
+$opt_t = "hp";
 getopts('dflt:CV');
 BEGIN {
     push(@INC, "@pkglibdir@");
@@ -202,6 +201,12 @@ sub ShowTechTransceivers {
 	    }
 	    next;
 	}
+	# KB.16.05.0003 5406R firmware bug
+	next if (/^\s*show time\s*$/i);
+	# Aruba with third-party transceivers
+	last if (/^(\* third-party transceiver)?show time/);
+
+	next if (/^\s*\S{3} \S{3}\s+\d+\s+\d+:\d+:\d+\s+\d+\s*$/);
 
 	ProcessHistory("COMMENTS","keysort","G0",";$_");
     }
@@ -459,12 +464,8 @@ if ($file) {
     open(INPUT,"<$host") || die "open failed for $host: $!\n";
 } else {
     print(STDERR "executing hlogin -t $timeo -c\"$commandstr\" $host\n") if ($debug || $log);
-    if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-	system "hlogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
-	open(INPUT, "< $host.raw") || die "hlogin failed for $host: $!\n";
-    } else {
-	open(INPUT,"hlogin -t $timeo -c \"$commandstr\" $host </dev/null |") || die "hlogin failed for $host: $!\n";
-    }
+    system "hlogin -t $timeo -c \"$commandstr\" $host </dev/null > $host.raw 2>&1" || die "hlogin failed for $host: $!\n";
+    open(INPUT, "< $host.raw") || die "hlogin failed for $host: $!\n";
 }
 
 # determine ACL sorting mode
@@ -543,9 +544,7 @@ ProcessHistory("","","","");
 close(INPUT);
 close(OUTPUT);
 
-if (defined($ENV{NOPIPE}) && $ENV{NOPIPE} =~ /^YES/i) {
-    unlink("$host.raw") if (! $debug);
-}
+unlink("$host.raw") if (! $debug);
 
 # check for completeness
 if (scalar(%commands) || !$clean_run) {
@@ -569,6 +568,10 @@ if (scalar(%commands) || !$clean_run) {
     }
     if (!$clean_run) {
 	print(STDERR "$host: End of run not found\n");
+	if ($debug) {
+	    print(STDERR "$host: clean_run is false\n") if (!$clean_run);
+	    print(STDERR "$host: found_end is false\n") if (!$found_end);
+	}
 	system("/usr/bin/tail -1 $host.new");
     }
     unlink "$host.new" if (! $debug);

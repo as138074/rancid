@@ -1,7 +1,5 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: rblogin.in 3519 2016-12-01 00:23:58Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
@@ -27,7 +25,7 @@ set send_human {.2 .1 .4 .2 1}
 # returns: 0 on success, 1 on failure, -1 if rsh was used successfully
 proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile } {
     global command spawn_id in_proc do_command do_script platform passphrase
-    global prompt prompt_match u_prompt p_prompt e_prompt sshcmd
+    global prompt prompt_match u_prompt p_prompt e_prompt sshcmd telnetcmd
     set in_proc 1
     set uprompt_seen 0
 
@@ -38,9 +36,9 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog methcmd suffix port
 	    if {"$port" == ""} {
-		set retval [catch {spawn telnet $router} reason]
+		set retval [catch {eval spawn [split "$telnetcmd $router"]} reason]
 	    } else {
-		set retval [catch {spawn telnet $router $port} reason]
+		set retval [catch {eval spawn [split "$telnetcmd $router $port"]} reason]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
@@ -77,11 +75,12 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	    }
 
 	    # handle escaped ;s in commands, and ;; and ^;
-	    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
-	    regsub {^;} $esccommand "\u002;" command
-	    set sep "\\1\u001"
-	    regsub -all {([^\\])\;} $command "$sep" esccommand
-	    set sep "\u001"
+	    regsub -all {([^\\]);} $command "\\1\u0002;" esccommand
+	    regsub -all {([^\\]);;} $esccommand "\\1;\u0002;" command
+	    regsub {^;} $command "\u0002;" esccommand
+	    regsub -all {[\\];} $esccommand ";" command
+	    regsub -all {\u0002;} $command "\u0002" esccommand
+	    set sep "\u0002"
 	    set commands [split $esccommand $sep]
 	    set num_commands [llength $commands]
 	    set rshfail 0
@@ -216,7 +215,8 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile 
 	}
 	-re "(Host key not found |The authenticity of host .* be established)" {
 	    expect {
-		-re "\\(yes\/no\\)\\?"	{ send "yes\r";
+		-re "\\(yes\/no\[^\\)]*\\)\\?" {
+					  send "yes\r";
 					  send_user "\nHost $router added to the list of known hosts.\n"
 					 }
 		-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
@@ -354,7 +354,7 @@ proc do_enable { enauser enapasswd } {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global do_saveconfig in_proc platform
+    global do_interact do_saveconfig in_proc platform
     set in_proc 1
 
     if { [string compare "extreme" "$platform"] } {
@@ -371,22 +371,19 @@ proc run_commands { prompt command } {
     log_user 0
 
     # handle escaped ;s in commands, and ;; and ^;
-    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
-    regsub {^;} $esccommand "\u002;" command
-    set sep "\\1\u001"
-    regsub -all {([^\\]);} $command "$sep" esccommand
-    set sep "\u001"
+    regsub -all {([^\\]);} $command "\\1\u0002;" esccommand
+    regsub -all {([^\\]);;} $esccommand "\\1;\u0002;" command
+    regsub {^;} $command "\u0002;" esccommand
+    regsub -all {[\\];} $esccommand ";" command
+    regsub -all {\u0002;} $command "\u0002" esccommand
+    set sep "\u0002"
     set commands [split $esccommand $sep]
     set num_commands [llength $commands]
     # the pager can not be turned off on the PIX, so we have to look
     # for the "More" prompt.  the extreme is equally obnoxious in pre-12.3 XOS,
     # with a global switch in the config.
     for {set i 0} {$i < $num_commands} { incr i} {
-	if { [lindex $commands $i] == "\u002" } {
-	    send -- "\r"
-	} else {
-	    send -- "[subst -nocommands [lindex $commands $i]]\r"
-	}
+	send -- "[subst -nocommands [lindex $commands $i]]\r"
 	expect {
 	    -re "\b+"				{ exp_continue }
 	    -re "^<<Service needs \[^>]+>>" {
@@ -427,6 +424,11 @@ proc run_commands { prompt command } {
 	}
     }
     log_user 1
+
+    if { $do_interact == 1 } {
+	interact
+	return 0
+    }
 
     if { [string compare "extreme" "$platform"] } {
 	send -h "exit\r"
@@ -529,17 +531,25 @@ foreach router [lrange $argv $i end] {
 
     # Figure out passwords
     if { $do_passwd || $do_enapasswd } {
-      set pswd [find password $router]
-      if { [llength $pswd] == 0 } {
-	send_user -- "\nError: no password for $router in $password_file.\n"
-	continue
-      }
-      if { $enable && $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
-	send_user -- "\nError: no enable password for $router in $password_file.\n"
-	continue
-      }
-      set passwd [join [lindex $pswd 0] ""]
-      set enapasswd [join [lindex $pswd 1] ""]
+	set pswd [find password $router]
+	if { [llength $pswd] == 0 } {
+	    send_user -- "\nError: no password for $router in $password_file.\n"
+	    continue
+	}
+	if { $enable && $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
+	    send_user -- "\nError: no enable password for $router in $password_file.\n"
+	    continue
+	}
+	if { $do_passwd } {
+	    set passwd [join [lindex $pswd 0] ""]
+	} else {
+	    set passwd $userpasswd
+	}
+	if { $do_enapasswd } {
+	    set enapasswd [join [lindex $pswd 1] ""]
+	} else {
+	    set enapasswd $enapasswd
+	}
     } else {
 	set passwd $userpasswd
 	set enapasswd $enapasswd
@@ -624,6 +634,10 @@ foreach router [lrange $argv $i end] {
     # Figure out the SSH executable name
     set sshcmd [join [lindex [find sshcmd $router] 0] ""]
     if { "$sshcmd" == "" } { set sshcmd {ssh} }
+
+    # Figure out the telnet executable name
+    set telnetcmd [join [lindex [find telnetcmd $router] 0] ""]
+    if { "$telnetcmd" == "" } { set telnetcmd "@TELNET_CMD@" }
 
     # if [-mM], skip do not login
     if { $do_cloginrcdbg > 0 } { continue; }

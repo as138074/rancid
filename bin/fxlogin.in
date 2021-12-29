@@ -1,11 +1,9 @@
 #! @EXPECT_PATH@ --
 ##
-## $Id: complogin.in 3519 2016-12-01 00:23:58Z heas $
-##
 ## @PACKAGE@ @VERSION@
 @copyright@
 #
-# complogin - Compass login
+# clogin - Cisco login
 #
 # Most options are intuitive for logging into a Cisco router.
 # The default is to enable (thus -noenable).  Some folks have
@@ -15,273 +13,18 @@
 # The default username password is the same as the vty password.
 #
 
-# Usage line
-set usage "Usage: $argv0 \[-dSV\] \[-autoenable\] \[-noenable\] \[-c command\] \
-\[-Evar=x\] \[-e enable-password\] \[-f cloginrc-file\] \[-p user-password\] \
-\[-r passphrase\] \[-s script-file\] \[-t timeout\] \[-u username\] \
-\[-v vty-password\] \[-w enable-username\] \[-x command-file\] \
-\[-y ssh_cypher_type\] router \[router...\]\n"
-
-# env(CLOGIN) may contain:
-#	x == do not set xterm banner or name
-
-# Password file
-set password_file $env(HOME)/.cloginrc
-# Default is to login to the router
-set do_command 0
-set do_script 0
-# The default is to automatically enable
-set avenable 1
-# The default is that you login non-enabled (tacacs can have you login already
-# enabled)
-set avautoenable 0
-# The default is to look in the password file to find the passwords.  This
-# tracks if we receive them on the command line.
-set do_passwd 1
-set do_enapasswd 1
-# Save config, if prompted
-set do_saveconfig 0
 # Sometimes routers take awhile to answer (the default is 10 sec)
 set timeoutdflt 45
 # Some CLIs having problems if we write too fast (Extreme, PIX, Cat)
 set send_human {.2 .1 .4 .2 1}
 
-# Find the user in the ENV, or use the unix userid.
-if {[info exists env(CISCO_USER)]} {
-    set default_user $env(CISCO_USER)
-} elseif {[info exists env(USER)]} {
-    set default_user $env(USER)
-} elseif {[info exists env(LOGNAME)]} {
-    set default_user $env(LOGNAME)
-} else {
-    # This uses "id" which I think is portable.  At least it has existed
-    # (without options) on all machines/OSes I've been on recently -
-    # unlike whoami or id -nu.
-    if [catch {exec id} reason] {
-	send_error "\nError: could not exec id: $reason\n"
-	exit 1
-    }
-    regexp {\(([^)]*)} "$reason" junk default_user
-}
-if {[info exists env(CLOGINRC)]} {
-    set password_file $env(CLOGINRC)
-}
-
-# Process the command line
-for {set i 0} {$i < $argc} {incr i} {
-    set arg [lindex $argv $i]
-
-    switch  -glob -- $arg {
-	# Expect debug mode
-	-d* {
-	    exp_internal 1
-	# Username
-	} -u* {
-	    if {! [regexp .\[uU\](.+) $arg ignore user]} {
-		incr i
-		set username [lindex $argv $i]
-	    }
-	# VTY Password
-	} -p* {
-	    if {! [regexp .\[pP\](.+) $arg ignore userpasswd]} {
-		incr i
-		set userpasswd [lindex $argv $i]
-	    }
-	    set do_passwd 0
-	# ssh passphrase
-	} -r* {
-	    if {! [regexp .\[rR\](.+) $arg ignore passphrase]} {
-		incr i
-		set vapassphrase [lindex $argv $i]
-	    }
-	# VTY Password
-	} -v* {
-	    if {! [regexp .\[vV\](.+) $arg ignore passwd]} {
-		incr i
-		set passwd [lindex $argv $i]
-	    }
-	    set do_passwd 0
-	# Version string
-	} -V* {
-	    send_user "@PACKAGE@ @VERSION@\n"
-	    exit 0
-	# Enable Username
-	} -w* {
-	    if {! [regexp .\[wW\](.+) $arg ignore enauser]} {
-		incr i
-		set enausername [lindex $argv $i]
-	    }
-	# Environment variable to pass to -s scripts
-	} -E* {
-	    if {[regexp .\[E\](.+)=(.+) $arg ignore varname varvalue]} {
-		set E$varname $varvalue
-	    } else {
-		send_user "\nError: invalid format for -E in $arg\n"
-		exit 1
-	    }
-	# Enable Password
-	} -e* {
-	    if {! [regexp .\[e\](.+) $arg ignore enapasswd]} {
-		incr i
-		set enapasswd [lindex $argv $i]
-	    }
-	    set do_enapasswd 0
-	# Command to run.
-	} -c* {
-	    if {! [regexp .\[cC\](.+) $arg ignore command]} {
-		incr i
-		set command [lindex $argv $i]
-	    }
-	    set do_command 1
-	# Expect script to run.
-	} -s* {
-	    if {! [regexp .\[sS\](.+) $arg ignore sfile]} {
-		incr i
-		set sfile [lindex $argv $i]
-	    }
-	    if { ! [file readable $sfile] } {
-		send_user "\nError: Can't read $sfile\n"
-		exit 1
-	    }
-	    set do_script 1
-	# save config on exit
-	} -S* {
-	    set do_saveconfig 1
-	# 'ssh -c' cypher type
-	} -y* {
-	    if {! [regexp .\[eE\](.+) $arg ignore cypher]} {
-		incr i
-		set cypher [lindex $argv $i]
-	    }
-	# alternate cloginrc file
-	} -f* {
-	    if {! [regexp .\[fF\](.+) $arg ignore password_file]} {
-		incr i
-		set password_file [lindex $argv $i]
-	    }
-	# Timeout
-	} -t* {
-	    if {! [regexp .\[tT\](.+) $arg ignore timeout]} {
-		incr i
-	        set timeoutdflt [lindex $argv $i]
-	    }
-	# Command file
-	} -x* {
-	    if {! [regexp .\[xX\](.+) $arg ignore cmd_file]} {
-		incr i
-		set cmd_file [lindex $argv $i]
-	    }
-	    if [catch {set cmd_fd [open $cmd_file r]} reason] {
-		send_user "\nError: $reason\n"
-		exit 1
-	    }
-	    set cmd_text [read $cmd_fd]
-	    close $cmd_fd
-	    set command [join [split $cmd_text \n] \;]
-	    set do_command 1
-	# Do we enable?
-	} -noenable {
-	    set avenable 0
-	# Does tacacs automatically enable us?
-	} -autoenable {
-	    set avautoenable 1
-	    set avenable 0
-	} -* {
-	    send_user "\nError: Unknown argument! $arg\n"
-	    send_user $usage
-	    exit 1
-	} default {
-	    break
-	}
-    }
-}
-# Process routers...no routers listed is an error.
-if { $i == $argc } {
-    send_user "\nError: $usage"
-}
-
-# Only be quiet if we are running a script (it can log its output
-# on its own)
-if { $do_script } {
-    log_user 0
-} else {
-    log_user 1
-}
-
-#
-# Done configuration/variable setting.  Now run with it...
-#
-
-# Sets Xterm title if interactive...if its an xterm and the user cares
-proc label { host } {
-    global env
-    # if CLOGIN has an 'x' in it, don't set the xterm name/banner
-    if [info exists env(CLOGIN)] {
-	if {[string first "x" $env(CLOGIN)] != -1} { return }
-    }
-    # take host from ENV(TERM)
-    if [info exists env(TERM)] {
-	if [regexp \^(xterm|vs) $env(TERM) ignore] {
-	    send_user "\033]1;[lindex [split $host "."] 0]\a"
-	    send_user "\033]2;$host\a"
-	}
-    }
-}
-
-# This is a helper function to make the password file easier to
-# maintain.  Using this the password file has the form:
-# add password sl*	pete cow
-# add password at*	steve
-# add password *	hanky-pie
-proc add {var args} { global int_$var ; lappend int_$var $args}
-proc include {args} {
-    global env
-    regsub -all "(^{|}$)" $args {} args
-    if { [regexp "^/" $args ignore] == 0 } {
-	set args $env(HOME)/$args
-    }
-    source_password_file $args
-}
-
-proc find {var router} {
-    upvar int_$var list
-    if { [info exists list] } {
-	foreach line $list {
-	    if { [string match -nocase [lindex $line 0] $router] } {
-		return [lrange $line 1 end]
-	    }
-	}
-    }
-    return {}
-}
-
-# Loads the password file.  Note that as this file is tcl, and that
-# it is sourced, the user better know what to put in there, as it
-# could install more than just password info...  I will assume however,
-# that a "bad guy" could just as easy put such code in the clogin
-# script, so I will leave .cloginrc as just an extention of that script
-proc source_password_file { password_file } {
-    global env
-    if { ! [file exists $password_file] } {
-	send_user "\nError: password file ($password_file) does not exist\n"
-	exit 1
-    }
-    file stat $password_file fileinfo
-    if { [expr ($fileinfo(mode) & 007)] != 0000 } {
-	send_user "\nError: $password_file must not be world readable/writable\n"
-	exit 1
-    }
-    if [catch {source $password_file} reason] {
-	send_user "\nError: $reason\n"
-	exit 1
-    }
-}
+@login_top@
 
 # Log into the router.
 # returns: 0 on success, 1 on failure, -1 if rsh was used successfully
-proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
-    global command spawn_id in_proc do_command do_script platform
-    global prompt u_prompt p_prompt e_prompt sshcmd
+proc login { router user userpswd passwd enapasswd cmethod cyphertype identfile } {
+    global command spawn_id in_proc do_command do_script platform passphrase
+    global prompt prompt_match u_prompt p_prompt e_prompt sshcmd telnetcmd
     set in_proc 1
     set uprompt_seen 0
 
@@ -291,10 +34,10 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	incr progs -1
 	if [string match "telnet*" $prog] {
 	    regexp {telnet(:([^[:space:]]+))*} $prog methcmd suffix port
-	    if {"$port" != ""} {
-		set retval [catch {spawn telnet $router} reason]
+	    if {"$port" == ""} {
+		set retval [catch {eval spawn [split "$telnetcmd $router"]} reason]
 	    } else {
-		set retval [catch {spawn telnet $router $port} reason]
+		set retval [catch {eval spawn [split "$telnetcmd $router $port"]} reason]
 	    }
 	    if { $retval } {
 		send_user "\nError: telnet failed: $reason\n"
@@ -305,15 +48,17 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    regexp {ssh(:([^[:space:]]+))*} $prog methcmd suffix port
 	    set cmd $sshcmd
 	    if {"$port" != ""} {
-		# XXX set cmd [join [lindex $sshcmd 0] " "]
 		set cmd "$cmd -p $port"
 	    }
 	    if {"$cyphertype" != ""} {
 		set cmd "$cmd -c $cyphertype"
 	    }
+	    if {"$identfile" != ""} {
+		set cmd "$cmd -i $identfile"
+	    }
 	    set retval [catch {eval spawn [split "$cmd -x -l $user $router" { }]} reason]
 	    if { $retval } {
-		send_user "\nError: $sshcmd failed: $reason\n"
+		send_user "\nError: $cmd failed: $reason\n"
 		return 1
 	    }
 	} elseif ![string compare $prog "rsh"] {
@@ -329,11 +74,12 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	    }
 
 	    # handle escaped ;s in commands, and ;; and ^;
-	    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
-	    regsub {^;} $esccommand "\u002;" command
-	    set sep "\\1\u001"
-	    regsub -all {([^\\])\;} $command "$sep" esccommand
-	    set sep "\u001"
+	    regsub -all {([^\\]);} $command "\\1\u0002;" esccommand
+	    regsub -all {([^\\]);;} $esccommand "\\1;\u0002;" command
+	    regsub {^;} $command "\u0002;" esccommand
+	    regsub -all {[\\];} $esccommand ";" command
+	    regsub -all {\u0002;} $command "\u0002" esccommand
+	    set sep "\u0002"
 	    set commands [split $esccommand $sep]
 	    set num_commands [llength $commands]
 	    set rshfail 0
@@ -431,6 +177,11 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
     # then it will just send the passwd.
     # if telnet fails with connection refused, try ssh
     expect {
+	-re "^<-+ More -+>\[^\n\r]*" {
+	    # ASA will use the pager for long banners
+	    send " ";
+	    exp_continue
+	}
 	-re "(Connection refused|Secure connection \[^\n\r]+ refused)" {
 	    catch {close}; catch {wait};
 	    if !$progs {
@@ -463,7 +214,8 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 	}
 	-re "(Host key not found |The authenticity of host .* be established)" {
 	    expect {
-		-re "\\(yes\/no\\)\\?"	{ send "yes\r";
+		-re "\\(yes\/no\[^\\)]*\\)\\?" {
+					  send "yes\r";
 					  send_user "\nHost $router added to the list of known hosts.\n"
 					 }
 		-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
@@ -496,6 +248,12 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 				  send_user "\nError: Check your passwd for $router\n"
 				  catch {close}; catch {wait}; return 1
 				}
+	-nocase -re "last login:"	{
+				  exp_continue
+				}
+	-nocase -re "failed login:"	{
+				  exp_continue
+				}
 	"Login failed"		{
 				  send_user "\nError: Check your passwd for $router\n"
 				  catch {close}; catch {wait}; return 1
@@ -515,13 +273,19 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 				  send "K\r"
 				  exp_continue
 				}
-	-re "Last login:"	{
+	-re "Press the <tab> key \[^\r\n]+\[\r\n]+"	{
 				  exp_continue
 				}
 	-re "@\[^\r\n]+ $p_prompt"	{
 				  # ssh pwd prompt
 				  sleep 1
 				  send -- "$userpswd\r"
+				  exp_continue
+				}
+	-re "Enter passphrase.*: " {
+				  # sleep briefly to allow time for stty -echo
+				  sleep .3
+				  send -- "$passphrase\r"
 				  exp_continue
 				}
 	-re "$u_prompt"		{
@@ -538,11 +302,15 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 				  }
 				  exp_continue
 				}
-	-re "$prompt"		{ break; }
+	-re "$prompt"		{
+				  set prompt_match $expect_out(0,string);
+				  break;
+				}
 	"Login invalid"		{
 				  send_user "\nError: Invalid login: $router\n";
 				  catch {close}; catch {wait}; return 1
 				}
+	-re "\[^\r\n]*\[\r\n]+"	{ exp_continue; }
      }
     }
 
@@ -552,16 +320,20 @@ proc login { router user userpswd passwd enapasswd cmethod cyphertype } {
 
 # Enable
 proc do_enable { enauser enapasswd } {
-    global do_saveconfig in_proc
-    global prompt u_prompt e_prompt
+    global in_proc
+    global prompt u_prompt e_prompt enacmd
     set in_proc 1
 
-    send "enable\r"
+    send "$enacmd\r"
     expect {
 	-re "$u_prompt"	{ send -- "$enauser\r"; exp_continue}
 	-re "$e_prompt"	{ send -- "$enapasswd\r"; exp_continue}
 	"#"		{ set prompt "#" }
 	"(enable)"	{ set prompt "> \\(enable\\) " }
+	"% Invalid input" {
+			  send_user "\nError: Unrecognized command, check your enable command\n";
+			  return 1
+			}
 	-re "(denied|Sorry|Incorrect)"	{
 			  # % Access denied - from local auth and poss. others
 			  send_user "\nError: Check your Enable passwd\n";
@@ -584,27 +356,35 @@ proc do_enable { enauser enapasswd } {
 
 # Run commands given on the command line.
 proc run_commands { prompt command } {
-    global do_saveconfig in_proc platform
+    global do_interact do_saveconfig in_proc platform
     set in_proc 1
 
-    # match cisco config mode prompts too, such as router(config-if)#,
-    # but catalyst does not change in this fashion.
-    regsub -all {^(.{1,11}).*([#>])$} $prompt {\1([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?} reprompt
+    # leave the prompt alone for fxos
+    #if { [string compare "extreme" "$platform"] } {
+    #	# match cisco config mode prompts too, such as router(config-if)#,
+    #	# but catalyst does not change in this fashion.
+    #	regsub -lineanchor -- {^(.{1,11}).*([#>])$} $prompt {\1} reprompt
+    #	regsub -all -- {[\\]$} $reprompt {} reprompt
+    #	append reprompt {([^#>\r\n]+)?[#>](\\([^)\\r\\n]+\\))?}
+    #} else {
+	set reprompt $prompt
+    #}
 
     # this is the only way i see to get rid of more prompts in o/p..grrrrr
     log_user 0
 
     # handle escaped ;s in commands, and ;; and ^;
-    regsub -all {([^\\]);;} $command "\\1;\u002;" esccommand
-    regsub {^;} $esccommand "\u002;" command
-    set sep "\\1\u001"
-    regsub -all {([^\\])\;} $command "$sep" esccommand
-    set sep "\u001"
+    regsub -all {([^\\]);} $command "\\1\u0002;" esccommand
+    regsub -all {([^\\]);;} $esccommand "\\1;\u0002;" command
+    regsub {^;} $command "\u0002;" esccommand
+    regsub -all {[\\];} $esccommand ";" command
+    regsub -all {\u0002;} $command "\u0002" esccommand
+    set sep "\u0002"
     set commands [split $esccommand $sep]
     set num_commands [llength $commands]
     # the pager can not be turned off on the PIX, so we have to look
-    # for the "More" prompt.  the extreme is equally obnoxious, with a
-    # global switch in the config.
+    # for the "More" prompt.  the extreme is equally obnoxious in pre-12.3 XOS,
+    # with a global switch in the config.
     for {set i 0} {$i < $num_commands} { incr i} {
 	send -- "[subst -nocommands [lindex $commands $i]]\r"
 	expect {
@@ -614,11 +394,16 @@ proc run_commands { prompt command } {
 	    -re "^\[^\n\r]*$reprompt."		{ send_user -- "$expect_out(buffer)"
 						  exp_continue
 						}
-	    -re "^--More--\[\r\n]+"		{ # specific match c1900 pager
+	    -re "^\[^-]*--More--\[^\r\n]*\[\r\n]+"	{ # fxos FTP pager
 						  send " "
 						  exp_continue
 						}
-	    -re "\[\n\r]+"			{ send_user -- "$expect_out(buffer)"
+	    -re "\[^\r\n]*\[\n\r]+"		{ send_user -- "$expect_out(buffer)"
+						  exp_continue
+						}
+	    # respond to prompt from "file prompt noisy" config
+	    -nocase -re "^display filename \\\[\[^]]*]\\?" 	{
+						  send "\r"
 						  exp_continue
 						}
 	    -re "\[^\r\n]*Press <SPACE> to cont\[^\r\n]*"	{
@@ -640,13 +425,27 @@ proc run_commands { prompt command } {
     }
     log_user 1
 
-    send -h "exit\r"
+    if { $do_interact == 1 } {
+	interact
+	return 0
+    }
+
+    if { [string compare "extreme" "$platform"] } {
+	send -h "exit\r"
+    } else {
+	send -h "quit\r"
+    }
     expect {
 	-re "^\[^\n\r *]*$reprompt"		{
 						  # the Cisco CE and Jnx ERX
 						  # return to non-enabled mode
 						  # on exit in enabled mode.
 						  send -h "exit\r"
+						  exp_continue;
+						}
+	-re "^\[^\n\r *]*Use .quit. to end"	{
+						  # the F5 >=11 uses quit
+						  send -h "quit\r"
 						  exp_continue;
 						}
 	"The system has unsaved changes"	{ # Force10 SFTOS
@@ -684,7 +483,7 @@ proc run_commands { prompt command } {
 						}
 	-re "\[\n\r]+"				{ exp_continue }
 	timeout					{ catch {close}; catch {wait};
-						  return 0
+						  return 1
 						}
 	eof					{ return 0 }
     }
@@ -697,6 +496,16 @@ proc run_commands { prompt command } {
 source_password_file $password_file
 set in_proc 0
 set exitval 0
+set prompt_match ""
+# if we have dont have a tty, we need some additional terminal settings
+if [catch {open /dev/tty w} ttyid] {
+    # no tty, ie: cron
+    set spawnopts "-nottycopy"
+    set stty_init "cols 132"
+    set stty_init "rows 4096"
+} else {
+    catch {close ttyid} reason
+}
 foreach router [lrange $argv $i end] {
     set router [string tolower $router]
     # attempt at platform switching.
@@ -709,45 +518,52 @@ foreach router [lrange $argv $i end] {
 	set timeout $timeoutdflt
     }
 
-    # Figure out the prompt.
-    # autoenable is off by default.  If we have it defined, it was done
-    # on the command line.  If it is not specifically set on the command
-    # line, check the password file.
-    if $avautoenable {
-	set autoenable 1
-	set enable 0
-	set prompt "(#| \\(enable\\))"
-    } else {
-	set ae [find autoenable $router]
-	if { "$ae" == "1" } {
-	    set autoenable 1
-	    set enable 0
-	    set prompt "(#| \\(enable\\))"
-	} else {
-	    set autoenable 0
-	    set enable $avenable
-	    set prompt ">"
-	}
+    # Default prompt.
+    set prompt [join [find prompt $router] ""]
+    if { [llength $prompt] == 0 } {
+	set prompt "^(\[^ >]*)(>|#)"
     }
 
-    # look for noenable option in .cloginrc
-    if { [find noenable $router] != "" } {
+    # look for autoenable option in .cloginrc & cmd-line
+    set ae [find autoenable $router]
+    if { "$ae" == "1" || $avautoenable } {
+	set autoenable 1
+    } else {
+	set autoenable 0
+    }
+    # look for enable options in .cloginrc & cmd-line
+    if { $avenable == 0 } {
 	set enable 0
+    } else {
+	set ne [find noenable $router]
+	if { "$ne" == "1" || "$autoenable" == "1" } {
+	    set enable 0
+	} else {
+	    set enable 1
+	}
     }
 
     # Figure out passwords
     if { $do_passwd || $do_enapasswd } {
-      set pswd [find password $router]
-      if { [llength $pswd] == 0 } {
-	send_user -- "\nError: no password for $router in $password_file.\n"
-	continue
-      }
-      if { $enable && $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
-	send_user -- "\nError: no enable password for $router in $password_file.\n"
-	continue
-      }
-      set passwd [join [lindex $pswd 0] ""]
-      set enapasswd [join [lindex $pswd 1] ""]
+	set pswd [find password $router]
+	if { [llength $pswd] == 0 } {
+	    send_user -- "\nError: no password for $router in $password_file.\n"
+	    continue
+	}
+	if { $enable && $do_enapasswd && $autoenable == 0 && [llength $pswd] < 2 } {
+	    send_user -- "\nError: no enable password for $router in $password_file.\n"
+	    continue
+	}
+	if { $do_passwd } {
+	    set passwd [join [lindex $pswd 0] ""]
+	} else {
+	    set passwd $userpasswd
+	}
+	if { $do_enapasswd } {
+	    set enapasswd [join [lindex $pswd 1] ""]
+	} else {
+	    set enapasswd $enapasswd
+	}
     } else {
 	set passwd $userpasswd
 	set enapasswd $enapasswd
@@ -780,16 +596,20 @@ foreach router [lrange $argv $i end] {
       if { "$enauser" == "" } { set enauser $ruser }
     }
 
+    # Figure out enable command
+    set enacmd [join [find enablecmd $router] ""]
+    if { "$enacmd" == "" } { set enacmd "enable" }
+
     # Figure out prompts
     set u_prompt [find userprompt $router]
     if { "$u_prompt" == "" } {
-	set u_prompt "(Username|Login|login|user name|User):"
+	set u_prompt "(\[Uu]sername|Login|login|user name|User):"
     } else {
 	set u_prompt [join [lindex $u_prompt 0] ""]
     }
     set p_prompt [find passprompt $router]
     if { "$p_prompt" == "" } {
-	set p_prompt "(\[Pp]assword|passwd):"
+	set p_prompt "(\[Pp]assword|passwd|Enter password for \[^ :]+):"
     } else {
 	set p_prompt [join [lindex $p_prompt 0] ""]
     }
@@ -798,6 +618,19 @@ foreach router [lrange $argv $i end] {
 	set e_prompt "\[Pp]assword:"
     } else {
 	set e_prompt [join [lindex $e_prompt 0] ""]
+    }
+
+    # Figure out identity file to use
+    set identfile [join [lindex [find identity $router] 0] ""]
+
+    # Figure out passphrase to use
+    if {[info exists avpassphrase]} {
+	set passphrase $avpassphrase
+    } else {
+	set passphrase [join [lindex [find passphrase $router] 0] ""]
+    }
+    if { ! [string length "$passphrase"]} {
+	set passphrase $passwd
     }
 
     # Figure out cypher type
@@ -816,11 +649,22 @@ foreach router [lrange $argv $i end] {
     set sshcmd [join [lindex [find sshcmd $router] 0] ""]
     if { "$sshcmd" == "" } { set sshcmd {ssh} }
 
+    # Figure out the telnet executable name
+    set telnetcmd [join [lindex [find telnetcmd $router] 0] ""]
+    if { "$telnetcmd" == "" } { set telnetcmd "@TELNET_CMD@" }
+
+    # if [-mM], skip do not login
+    if { $do_cloginrcdbg > 0 } { continue; }
+
     # Login to the router
-    if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype]} {
+    if {[login $router $ruser $userpswd $passwd $enapasswd $cmethod $cyphertype $identfile]} {
 	incr exitval
 	# if login failed or rsh was unsuccessful, move on to the next device
 	continue
+    }
+    # Figure out the prompt.
+    if { [regexp -- "(#| \\(enable\\))" $prompt_match junk] == 1 } {
+	set enable 0
     }
     if { $enable } {
 	if {[do_enable $enauser $enapasswd]} {
@@ -831,20 +675,49 @@ foreach router [lrange $argv $i end] {
 	    }
 	}
     }
-    # we are logged in, now figure out the full prompt
-    send "\r"
-    expect {
-	-re "\[\r\n]+"		{ exp_continue; }
-	-re "^.+$prompt"	{ set junk $expect_out(0,string);
-				  regsub -all "\[\]\[\(\)]" $junk {\\&} prompt;
-				}
-    }
-
-    if { $do_command || $do_script } {
-	send "session paginate disable\r"
-	expect -re $prompt	{}
-    }
-
+    # we would normally try to find the full prompt for more precise matching
+    # as we run commands, but the fx has weird properties.  first, it has just
+    # ">" as its prompt.  two, when we connects to the fxos side, the prompt
+    # changes completely.  so, until it matures, just use a wisely chose match.
+    # send "\r"
+    #regsub -all {^(\^*)(.*)} $prompt {\2} reprompt
+    #expect {
+    #	-re "\[\r\n]+"		{ exp_continue; }
+    #	-re "^(.+\[:.])1 ($reprompt)" { # stoopid extreme cmd-line numbers and
+    #				  # prompt based on state of config changes,
+    #				  # which may have an * at the beginning.
+    #				  set junk $expect_out(1,string)
+    #				  regsub -all "^\\\* " $expect_out(1,string) {} junk
+    #				  regsub -all "\[\]\[\(\)]" $junk {\\&} junk;
+    #				  set prompt ".? ?$junk\[0-9]+ $expect_out(2,string)";
+    #				  set platform "extreme"
+    #				}
+    #	-re "^.+$reprompt"	{ set junk $expect_out(0,string);
+    #				  regsub -all "\[\]\[\(\)+]" $junk {\\&} prompt;
+    #				}
+    #}
+    # no pager on fxos layer and entering the unsupported commands is ugly
+    #if { $do_command || $do_script } {
+    #	if { [string compare "extreme" "$platform"] } {
+    #	    # If the prompt is (enable), then we are on a switch and the
+    #	    # command is "set length 0"; otherwise its "terminal length 0".
+    #	    if [regexp -- ".*> .*enable" "$prompt"] {
+    #		send "set length 0\r"
+    #		expect -re $prompt  	{}
+    #		send "set width 132\r"
+    #		expect -re $prompt	{}
+    #		send "set logging session disable\r"
+    #	    } else {
+    #		send "terminal length 0\r"
+    #		expect -re $prompt  	{}
+    #		send "terminal width 132\r"
+    #	    }
+    #	    expect -re $prompt		{}
+    #	} else {
+    #	    send "disable clipaging\r"
+    #	    expect -re $prompt		{}
+    #	}
+    #}
     if { $do_command } {
 	if {[run_commands $prompt $command]} {
 	    incr exitval
