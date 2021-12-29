@@ -1,3 +1,91 @@
+3.13
+	iosxr.pm: handle power shelves in eXR-lite
+
+	dnos10.pm: add command show inventory media - github.com/spike77453
+
+	dnos10.pm: filter fan speed for other fans on same tray -
+	github.com/spike77453
+
+	junos.pm: recognize error connecting to dead slave RE
+
+	rancid.types.base: add type ios-xr7 for Cisco XR >=7.0 on *some*
+	devices, such as NCS - Bill Owens
+
+	rancid.types.base: add axis type for axis.com switch - Troy Beisigl
+
+	smc.pm: filter module uptime on PowerConnect 5524
+
+	nxos.pm: filter fluctuating WWNs
+
+	arcos.pm: show features command no longer exposed in ~4.x
+
+	sros.pm: end of config marker disappeared ~20.5, to be fixed in 20.7r1.
+	Use the MD context marker as an alternative marker
+
+	jlogin: adjust code to set screen with for -s and -c
+
+	lg.cgi, lgform.cgi: fix missing variable inializations - Troy Boudreau
+
+	ios.pm: ASAv fails to read licensing debug info sometimes
+
+	lgform.cgi: ibcgi-pm-perl removed start/endform version 4.04 - Troy
+	Boudreau
+
+	mtrancid, routeros.pm: convert mikrotik to module
+
+	control_rancid: omit .old when looking for rogue files
+
+	a10login: regex lacking regex option - Tim Warnock
+
+	control_rancid: add --porcelain to git status for expected output -
+	github.com/jude
+
+	avocent.pm: fix prompt match, so filters will match the exit command,
+	which only occasionally has a leading space,
+
+	avocent.pm: # seems to be the ACS comment character, not !.  Collect
+	total memory from /proc/meminfo.  Comment output from some cat commands.
+
+	rancid.pm: return an error when a rancid.type.conf line has too few
+	fields
+
+	avorancid, avocent.pm: convert avocent to module
+
+	avologin: run_commands(): prompt match s.b. [#$], not [#>]
+
+	avologin: normalize to clogin
+
+	avologin: make default timeout longer, these are slow
+
+	ios.pm: show license could return an author failure - Majed Zouhairy
+
+	zrancid, frr.pm: convert zebra script to FRR perl library
+
+	wlogin: send_human the logout command
+
+	rancid.types.base: note AAA role needed for WLC - Charles Allen
+
+	rancid.pm: check that opt_t is defined before use
+
+	xilogin: arcos login banner match can fail if a motd-banner is set
+
+	mtrancid: filter dynamic configuration, such as fluctuating pppoe
+	user-specific config
+
+	ios.pm: filter flash dir license_evlog, receives debug logs on XE
+	>=17.2 - Reuben Farrelly
+
+	arbor.pm: add commands system file show, system show, system disk show
+
+	jerancid: remove more temperatures - Christian Rohmann via debian
+	package
+
+	man: Move rancid_intro(1) and lg_intro(1) to man section 7 - - Roland
+	Rosenfeld
+
+	misc: Add some documentation for a10login, brlogin, fxlogin, rblogin -
+	Roland Rosenfeld
+
 3.12
 	sros.pm: summarize flash free space
 
@@ -5,8 +93,8 @@
 
 	exos.pm: ShowVersion(): improve parsing of h/w - James Andrewartha
 
-	ios.pm: do not use perl /n regex modifier; it didnt appear until 5.22 and is causing
-	heartburn
+	ios.pm: do not use perl /n regex modifier; it didnt appear until 5.22
+	and is causing heartburn
 
 3.11
 	ios.pm: some IOS, possibly newer releases, report command authorization
@@ -1091,7 +1179,7 @@
 
 	rancid-cvs: change git push.default to current - Per Carlson
 
-	add .old to configs/{.cvsignore,.gitignore}; see control_rancid.1
+	add .old to configs/{.cvsignore,.gitignore}; see control_rancid(1)
 
 	rancid.pm: rework IP address sorting based on patch from Nick Hilliard
 

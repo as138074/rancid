@@ -11,15 +11,15 @@ AUTOMAKE_OPTIONS=foreign
 
 bin_PROGRAMS = hpuifilter par
 bin_SCRIPTS = a10login alogin agmrancid anlogin arancid \
-	avologin avorancid blogin brancid brlogin cat5rancid clogin \
+	avologin blogin brancid brlogin cat5rancid clogin \
 	control_rancid csblogin cssrancid \
 	dllogin elogin erancid f5rancid \
 	flogin fnlogin fxlogin hlogin hrancid htlogin \
-	htrancid jerancid jlogin mrancid mrvlogin mtlogin mtrancid \
+	htrancid jerancid jlogin mrancid mrvlogin mtlogin \
 	nlogin noklogin nrancid nslogin nsrancid panlogin plogin \
 	rancid rblogin rivlogin \
 	rivrancid rrancid rtftpcopy tlogin trancid ulogin wlogin \
-	xilogin xirancid xlogin zrancid
+	xilogin xirancid xlogin
 # XXX hack for the rancid to get pkglibdir, see corresponding XXX below
 bin_in = control_rancid.in hrancid.in plogin.in rancid.in
 

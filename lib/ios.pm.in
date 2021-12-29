@@ -564,6 +564,7 @@ sub ShowLicense {
 	return(0) if (/% incomplete command/i);                 # show lic on old XE box
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(invalid (input|command) detected|type help or )/i);
+	return(-1) if (/(?:%|command)? authorization failed/i);
 	return(-1) if (/unable to retrieve license info/i);
 
 	# filter the BS from license broker
@@ -1051,7 +1052,7 @@ sub ShowFlash {
 	/\s+(private-multiple-fs|multiple-fs|LISP-MapCache-IPv\S+|nv_hdr)$/ &&
 	    next;
 
-	if (/(dhcp_[^. ]*\.txt|vlan\.dat|sflog|snooping)/ ||
+	if (/(dhcp_[^. ]*\.txt|license_evlog|vlan\.dat|sflog|snooping)/ ||
 		 /(LOCAL-CA-SERVER(?:[^\s]*))\s*$/ ||
 		 /(smart-log\/agentlog|syslog)\s*$/ ||
 		 /(log\/(?:ssp_tz\/)?[^. ]+\.log(?:\.[0-9]+\.gz)?)\s*$/) {
@@ -1345,11 +1346,11 @@ sub ShowContAll {
 	    ProcessHistory("INT","","","!Interface: $1\n") && next;
 	/(Media Type is \S+),/ &&
 	    ProcessHistory("INT","","","!\t$1\n");
-	    if (/(M\dT[^ :]*:) show controller:$/) {
-		my($ctlr) = $1;
-		$_ = <$INPUT>; tr/\015//d; s/ subunit \d,//;
-		ProcessHistory("INT","","","!Interface: $ctlr $_");
-	    }
+	if (/(M\dT[^ :]*:) show controller:$/) {
+	    my($ctlr) = $1;
+	    $_ = <$INPUT>; tr/\015//d; s/ subunit \d,//;
+	    ProcessHistory("INT","","","!Interface: $ctlr $_");
+	}
 	if (/^(\S+) : show controller:$/) {
 	    my($ctlr) = $1;
 	    $_ = <$INPUT>; tr/\015//d; s/ subunit \d,//;
@@ -1459,6 +1460,8 @@ sub ShowDebug {
 	return(1) if (/Line has invalid autocommand /);
 	return(1) if (/(invalid (input|command) detected|type help or )/i);
 	return(-1) if (/(?:%|command)? authorization failed/i);
+	# ASAv produce this error occasionally
+	return(-1) if (/unable to retrieve licensing debug info/i);
 	# the pager can not be disabled per-session on the PIX
 	if (/^(<-+ More -+>)/) {
 	    my($len) = length($1);

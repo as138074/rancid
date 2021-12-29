@@ -5,7 +5,7 @@ package dnos10;
 #
 #  RANCID - Really Awesome New Cisco confIg Differ
 #
-#  dnos9.pm - Dell NOS10 rancid procedures - from Bjørn Skobba
+#  dnos10.pm - Dell NOS10 rancid procedures - from Bjørn Skobba
 
 use 5.010;
 use strict 'vars';
@@ -144,18 +144,23 @@ REDO:	last if (/$prompt/);
 	    ProcessHistory("COMMENTS","keysort","C1","! $_");
 	    # FanTray  Status      AirFlow   Fan  Speed(rpm)  Status
 	    # ----------------------------------------------------------------
-	    # 1        up          REVERSE   1    11160       up         
+	    # 1        up          REVERSE   1    8520        up
+	    #                                2    7680        up
 	    while (<$INPUT>) {
 		s/^\s+\015//g;
 		tr/\015//d;
 		last if (/$prompt/);
 		last if (/^-- /);		# next section
-		/^\s*$/ && next;
 		if (/^(\d+\s+\w+\s+\w+\s+\d+\s+)(\d+)(\s+\w+)\s*$/) {
 		    my($sl) = length($2);
                     my($fmt) = "%s%-". $sl ."s%s\n";
                     $_ = sprintf($fmt, $1, "", $3);
+		} elsif (/^(\s+\d+\s+)(\d+)(\s+\w+)\s*$/) {
+		    my($sl) = length($2);
+		    my($fmt) = "%s%-". $sl ."s%s\n";
+		    $_ = sprintf($fmt, $1, "", $3);
 		}
+		/^\s*$/ && next;
 		ProcessHistory("COMMENTS","keysort","C1","! $_");
 	    }
 	    goto REDO;
@@ -186,6 +191,26 @@ sub ShowInventory {
 	ProcessHistory("COMMENTS","keysort","INVENTORY","!Inventory: $_");
     }
     ProcessHistory("COMMENTS","keysort","INVENTORY","!\n");
+    return(0);
+}
+
+# This routine parses "show inventory media"
+sub ShowInventoryMedia {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowInventoryMedia: $_" if ($debug);
+
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^(\s*|\s*$cmd\s*)$/);
+	next if (/^(\s*System Inventory Media\s*)$/);
+	return(1) if /(Invalid input|Type help or )/;
+	return(-1) if (/command authorization failed/i);
+
+	/-----------------------------/ && next;
+	ProcessHistory("COMMENTS","keysort","INVENTORYMEDIA","!Inventory: $_");
+    }
+    ProcessHistory("COMMENTS","keysort","INVENTORYMEDIA","!\n");
     return(0);
 }
 
