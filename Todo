@@ -1,3 +1,4 @@
+- Cyclades® ACS Advanced Console Server - o2.dfw.rg.net is also one
 - add user-specific post-filter option per-device-type to filter output before
   diff (thus affecting mail and commit).
 - allow -r to be specified multiple times for rancid-run/control_rancid
